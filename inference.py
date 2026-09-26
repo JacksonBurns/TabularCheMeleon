@@ -6,7 +6,8 @@ import torch.nn.functional as F
 from tabularchemeleon import TabularCheMeleonLightningModule
 
 
-class CheMeleonPredictor:
+# TODO: make scikit-learn compatible
+class TabularCheMeleonRegressor:
     """
     Inference engine for TabularCheMeleon models.
     Supports both continuous bioactivity regression with uncertainty intervals
@@ -169,10 +170,10 @@ class CheMeleonPredictor:
 # ==============================================================================
 
 if __name__ == "__main__":
-    checkpoint_file = "tabular_chemeleon_logs/inductive_tabular_chemeleon/version_0/checkpoints/best-epoch=12-val_loss=0.0821.ckpt"
+    checkpoint_file = "/home/jackson/TabularCheMeleon/tabular_chemeleon_logs/inductive_tabular_chemeleon/version_8/checkpoints/best-epoch=72-val_loss=0.0000.ckpt"
 
     # Initialize predictor
-    predictor = CheMeleonPredictor(checkpoint_path=checkpoint_file)
+    predictor = TabularCheMeleonRegressor(checkpoint_path=checkpoint_file)
     embed_dim = predictor.embed_dim
 
     # --------------------------------------------------------------------------

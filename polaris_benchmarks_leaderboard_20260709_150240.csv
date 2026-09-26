@@ -1,0 +1,190 @@
+Benchmark_ID,#,Name,Contributors,accuracy,f1,roc_auc,pr_auc,mcc,cohen_kappa,References,mean_absolute_error,mean_squared_error,r2,spearmanr,pearsonr,explained_var
+polaris/pkis2-ret-wt-cls-v2,1,3B_e50_MPNN_LargeMix-and-Phenomics,,0.925,0.692,0.956,0.885,0.697,0.654,Code Paper,,,,,,
+polaris/pkis2-ret-wt-cls-v2,2,1B_MolGPS-ens_LargeMix-and-Phenomics,,0.896,0.560,0.952,0.879,0.556,0.510,Code Paper,,,,,,
+polaris/pkis2-ret-wt-cls-v2,3,CheMeleon,,0.877,0.519,0.859,0.639,0.475,0.454,No references provided,,,,,,
+polaris/pkis2-ret-wt-cls-v2,4,MHNfs,,0.217,0.291,0.759,0.417,0.107,0.023,Code Paper,,,,,,
+polaris/pkis2-ret-wt-reg-v2,1,1B_MolGPS-ens_LargeMix-and-Phenomics,,,,,,,,Code Paper,18.309,589.944,0.503,0.708,0.750,0.553
+polaris/pkis2-ret-wt-reg-v2,2,3B_e50_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,18.252,609.399,0.487,0.677,0.739,0.541
+polaris/pkis2-ret-wt-reg-v2,3,CheMeleon,,,,,,,,No references provided,19.777,684.319,0.424,0.620,0.655,0.428
+polaris/pkis2-ret-wt-reg-v2,4,CheMeleon,,,,,,,,No references provided,19.980,724.347,0.390,0.663,0.687,0.443
+polaris/pkis2-kit-wt-cls-v2,1,CheMeleon,,0.862,0.500,0.823,0.646,0.478,0.433,No references provided,,,,,,
+polaris/pkis2-kit-wt-cls-v2,2,MHNfs,,0.224,0.328,0.713,0.376,0.091,0.017,Code Paper,,,,,,
+polaris/pkis2-kit-wt-reg-v2,1,CheMeleon,,,,,,,,No references provided,21.480,849.611,0.296,0.536,0.591,0.317
+polaris/pkis2-egfr-wt-reg-v2,1,aether-pharmaos-pkis2-egfr-wt-ensemble,,,,,,,,No references provided,16.009,430.821,0.465,0.409,0.691,0.466
+polaris/pkis2-egfr-wt-reg-v2,2,CheMeleon,,,,,,,,No references provided,16.587,459.929,0.429,0.420,0.669,0.430
+polaris/adme-fang-solu-1,1,1B_MPNN_MolGPS-ens_LargeMix,,,,,,,,Code Paper,0.312,0.222,0.590,0.664,0.770,0.592
+polaris/adme-fang-solu-1,2,1B_MPNN_LargeMix-Phenomics,,,,,,,,Code Paper,0.308,0.229,0.578,0.660,0.764,0.583
+polaris/adme-fang-solu-1,3,CheMeleonMOE,,,,,,,,No references provided,0.317,0.257,0.526,0.642,0.729,0.532
+polaris/adme-fang-solu-1,4,CheMeleon,,,,,,,,No references provided,0.355,0.291,0.464,0.588,0.682,0.465
+polaris/adme-fang-solu-1,5,it-works-now,,,,,,,,No references provided,0.378,0.314,0.420,0.574,0.669,0.430
+polaris/adme-fang-solu-1,6,ML4DD-team16,,,,,,,,Code Paper,0.397,0.311,0.426,0.551,0.654,0.427
+polaris/adme-fang-solu-1,7,ML4DD-team9,,,,,,,,Code Paper,0.399,0.323,0.405,0.546,0.651,0.406
+polaris/adme-fang-solu-1,8,team9_submission_2,,,,,,,,No references provided,0.399,0.323,0.405,0.546,0.651,0.406
+polaris/adme-fang-solu-1,9,ExactTanimotoGP,,,,,,,,Code,0.409,0.325,0.400,0.528,0.635,0.402
+polaris/adme-fang-solu-1,10,ML4DD-team25,+1 more,,,,,,,Code Paper,0.424,0.329,0.393,0.553,0.632,0.398
+polaris/adme-fang-rppb-1,1,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.377,0.235,0.736,0.930,0.908,0.738
+polaris/adme-fang-rppb-1,2,1B_MPNN_MolGPS-ens_LargeMix,,,,,,,,Code Paper,0.406,0.265,0.702,0.879,0.886,0.710
+polaris/adme-fang-rppb-1,3,nepare,,,,,,,,Code,0.382,0.230,0.741,0.828,0.863,0.744
+polaris/adme-fang-rppb-1,4,TabPFNv2-rdkit,,,,,,,,No references provided,0.391,0.316,0.644,0.801,0.816,0.645
+polaris/adme-fang-rppb-1,5,nepare_chemprop,,,,,,,,Code,0.499,0.361,0.594,0.813,0.780,0.604
+polaris/adme-fang-rppb-1,6,chemma-2b-sft,,,,,,,,Code Paper,0.479,0.436,0.509,0.790,0.747,0.546
+polaris/adme-fang-rppb-1,7,adme-fang-RPPB-1_desc2D_RandomForestRegressor,,,,,,,,No references provided,0.508,0.457,0.485,0.774,0.722,0.486
+polaris/adme-fang-rppb-1,8,adme-fang-RPPB-1-GIRAFFE-wae,,,,,,,,Code Paper,0.660,0.634,0.287,0.730,0.680,0.315
+polaris/adme-fang-rppb-1,9,CheMeleon,,,,,,,,No references provided,0.534,0.517,0.418,0.720,0.662,0.418
+polaris/adme-fang-rppb-1,10,chemlactica-1b-sft,,,,,,,,Code Paper,0.567,0.555,0.375,0.568,0.614,0.375
+polaris/adme-fang-hppb-1,1,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.284,0.143,0.763,0.884,0.888,0.787
+polaris/adme-fang-hppb-1,2,1B_MPNN_MolGPS-ens_LargeMix,,,,,,,,Code Paper,0.291,0.152,0.749,0.858,0.884,0.779
+polaris/adme-fang-hppb-1,3,TabPFNv2-rdkit,,,,,,,,No references provided,0.345,0.210,0.653,0.831,0.827,0.677
+polaris/adme-fang-hppb-1,4,adme-fang-HPPB-1-GIRAFFE-wae,,,,,,,,Code Paper,0.391,0.219,0.639,0.815,0.815,0.662
+polaris/adme-fang-hppb-1,5,agentomics-ml-adme-fang-hppb-1,,,,,,,,No references provided,0.427,0.258,0.574,0.821,0.815,0.664
+polaris/adme-fang-hppb-1,6,nepare,,,,,,,,Code,0.462,0.303,0.499,0.781,0.809,0.621
+polaris/adme-fang-hppb-1,7,CheMeleon,,,,,,,,No references provided,0.425,0.249,0.589,0.774,0.793,0.619
+polaris/adme-fang-hppb-1,8,chemlactica-125m-sft,,,,,,,,Code Paper,0.408,0.249,0.589,0.762,0.774,0.597
+polaris/adme-fang-hppb-1,9,adme-fang-HPPB-1_atompair_RandomForestRegressor,,,,,,,,No references provided,0.499,0.333,0.450,0.679,0.690,0.470
+polaris/adme-fang-hppb-1,10,chemma-2b-sft,,,,,,,,Code Paper,0.470,0.383,0.367,0.644,0.636,0.388
+polaris/adme-fang-perm-1,1,1B_MPNN_MolGPS-ens_LargeMix,,,,,,,,Code Paper,0.238,0.113,0.772,0.863,0.879,0.772
+polaris/adme-fang-perm-1,2,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.249,0.129,0.739,0.869,0.860,0.739
+polaris/adme-fang-perm-1,3,CheMeleon,,,,,,,,No references provided,0.293,0.161,0.674,0.817,0.822,0.674
+polaris/adme-fang-perm-1,4,MolEncoder,,,,,,,,No references provided,0.305,0.176,0.646,0.778,0.804,0.647
+polaris/adme-fang-perm-1,5,TabPFNv2-rdkit,,,,,,,,No references provided,0.316,0.182,0.632,0.782,0.798,0.634
+polaris/adme-fang-perm-1,6,adme-fang-PERM-1-GIRAFFE-wae_s,,,,,,,,Code Paper,0.330,0.203,0.590,0.758,0.772,0.592
+polaris/adme-fang-perm-1,7,chemlactica-1b-sft,,,,,,,,Code Paper,0.398,0.232,0.531,0.581,0.762,0.577
+polaris/adme-fang-perm-1,8,optimized-random-forest-rdkit-descriptors,,,,,,,,No references provided,0.378,0.239,0.517,0.712,0.727,0.517
+polaris/adme-fang-perm-1,9,adme-fang-PERM-1_desc2D_RandomForestRegressor,,,,,,,,No references provided,0.390,0.248,0.500,0.711,0.716,0.502
+polaris/adme-fang-perm-1,10,chemlactica-125m-sft,,,,,,,,Code Paper,0.413,0.257,0.481,0.503,0.714,0.510
+polaris/adme-fang-rclint-1,1,1B_MPNN_MolGPS-ens_LargeMix,,,,,,,,Code Paper,0.362,0.216,0.617,0.794,0.798,0.631
+polaris/adme-fang-rclint-1,2,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.366,0.220,0.611,0.780,0.784,0.611
+polaris/adme-fang-rclint-1,3,CheMeleon,,,,,,,,No references provided,0.393,0.243,0.570,0.762,0.757,0.571
+polaris/adme-fang-rclint-1,4,chemlactica-125m-sft,,,,,,,,Code Paper,0.411,0.296,0.475,0.727,0.714,0.476
+polaris/adme-fang-rclint-1,5,chemlactica-1b-sft,,,,,,,,Code Paper,0.418,0.310,0.451,0.701,0.698,0.452
+polaris/adme-fang-rclint-1,6,TabPFNv2-rdkit,,,,,,,,No references provided,0.420,0.297,0.474,0.693,0.694,0.476
+polaris/adme-fang-rclint-1,7,chemma-2b-sft,,,,,,,,Code Paper,0.432,0.337,0.404,0.665,0.660,0.405
+polaris/adme-fang-rclint-1,8,adme-fang-RCLint-1_desc2D_RandomForestRegressor,,,,,,,,No references provided,0.465,0.334,0.408,0.640,0.640,0.409
+polaris/adme-fang-rclint-1,9,adme-fang-RCLint-1_desc2D_RandomForestRegressor,,,,,,,,No references provided,0.473,0.340,0.398,0.636,0.631,0.398
+polaris/adme-fang-rclint-1,10,adme-fang-RCLint-1_desc2D_FCModel,,,,,,,,No references provided,0.516,0.403,0.287,0.534,0.544,0.290
+polaris/adme-fang-hclint-1,1,seqera-gradient,,,,,,,,No references provided,0.285,0.145,0.626,0.792,0.796,0.626
+polaris/adme-fang-hclint-1,2,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.296,0.160,0.589,0.774,0.778,0.600
+polaris/adme-fang-hclint-1,3,chemlactica-1b-sft,,,,,,,,Code Paper,0.314,0.200,0.485,0.721,0.720,0.490
+polaris/adme-fang-hclint-1,4,CheMeleon,,,,,,,,No references provided,0.336,0.189,0.514,0.725,0.720,0.514
+polaris/adme-fang-hclint-1,5,chemlactica-125m-sft,,,,,,,,Code Paper,0.321,0.211,0.456,0.715,0.717,0.460
+polaris/adme-fang-hclint-1,6,MolEncoder,,,,,,,,No references provided,0.337,0.195,0.497,0.718,0.714,0.501
+polaris/adme-fang-hclint-1,7,agentomics-ml-adme-fang-hclint-1,,,,,,,,No references provided,0.357,0.200,0.486,0.695,0.697,0.486
+polaris/adme-fang-hclint-1,8,chemma-2b-sft,,,,,,,,Code Paper,0.342,0.238,0.388,0.684,0.674,0.388
+polaris/adme-fang-hclint-1,9,TabPFNv2-rdkit,,,,,,,,No references provided,0.364,0.220,0.433,0.673,0.662,0.435
+polaris/adme-fang-hclint-1,10,adme-fang-HCLint-1_desc2D_RandomForestRegressor,,,,,,,,No references provided,0.381,0.230,0.407,0.643,0.639,0.408
+tdcommons/lipophilicity-astrazeneca,1,1B_MPNN_MolGPS-ens_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.392,,,,,
+tdcommons/lipophilicity-astrazeneca,2,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.411,,,,,
+tdcommons/lipophilicity-astrazeneca,3,3B_e50_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.424,,,,,
+tdcommons/lipophilicity-astrazeneca,4,CheMeleon,,,,,,,,No references provided,0.443,,,,,
+tdcommons/lipophilicity-astrazeneca,5,MolEncoder,,,,,,,,No references provided,0.497,,,,,
+tdcommons/lipophilicity-astrazeneca,6,agentomics-ml-lipophilicity-astrazeneca,,,,,,,,No references provided,0.497,,,,,
+tdcommons/lipophilicity-astrazeneca,7,TabPFNv2-rdkit,,,,,,,,No references provided,0.499,,,,,
+tdcommons/lipophilicity-astrazeneca,8,TabPFNv2-rdkit,,,,,,,,No references provided,0.502,,,,,
+tdcommons/lipophilicity-astrazeneca,9,TabPFNv2-maplight_gnn,,,,,,,,No references provided,0.502,,,,,
+tdcommons/lipophilicity-astrazeneca,10,TabPFNv2-rdkit-3D,,,,,,,,No references provided,0.524,,,,,
+tdcommons/ppbr-az,1,3B_e50_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,7.004,,,,,
+tdcommons/ppbr-az,2,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,7.026,,,,,
+tdcommons/ppbr-az,3,TabPFNv2-rdkit-3D,,,,,,,,No references provided,7.033,,,,,
+tdcommons/ppbr-az,4,TabPFNv2-rdkit,,,,,,,,No references provided,7.117,,,,,
+tdcommons/ppbr-az,5,CheMeleon,,,,,,,,No references provided,7.532,,,,,
+tdcommons/clearance-hepatocyte-az,1,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,,,,0.538,,
+tdcommons/clearance-hepatocyte-az,2,3B_e50_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,,,,0.525,,
+tdcommons/clearance-hepatocyte-az,3,clearance-hepatocyte-az-GIRAFFE-wae,,,,,,,,Code Paper,,,,0.429,,
+tdcommons/clearance-hepatocyte-az,4,TabPFNv2-rdkit,,,,,,,,No references provided,,,,0.410,,
+tdcommons/clearance-hepatocyte-az,5,TabPFNv2-rdkit-3D,,,,,,,,No references provided,,,,0.402,,
+tdcommons/clearance-hepatocyte-az,6,CheMeleon,,,,,,,,No references provided,,,,0.387,,
+tdcommons/cyp2d6-substrate-carbonmangels,1,aether-pharmaos-cyp2d6-sub-3d-ensemble,,,,,0.732,,,No references provided,,,,,,
+tdcommons/cyp2d6-substrate-carbonmangels,2,drylab,,,,,0.724,,,No references provided,,,,,,
+tdcommons/cyp2d6-substrate-carbonmangels,3,No name provided,,,,,0.719,,,No references provided,,,,,,
+tdcommons/cyp2d6-substrate-carbonmangels,4,TabPFNv2-rdkit,,,,,0.717,,,No references provided,,,,,,
+tdcommons/cyp2d6-substrate-carbonmangels,5,TabPFNv2-rdkit-3D,,,,,0.714,,,No references provided,,,,,,
+tdcommons/cyp2d6-substrate-carbonmangels,6,1B_MPNN_LargeMix-and-Phenomics,,,,,0.711,,,Code Paper,,,,,,
+tdcommons/cyp2d6-substrate-carbonmangels,7,agentomics-ml-cyp2d6-substrate-carbonmangels,,,,,0.707,,,No references provided,,,,,,
+tdcommons/cyp2d6-substrate-carbonmangels,8,CheMeleon,,,,,0.688,,,No references provided,,,,,,
+tdcommons/cyp2d6-substrate-carbonmangels,9,3B_e50_MPNN_LargeMix-and-Phenomics,,,,,0.680,,,Code Paper,,,,,,
+tdcommons/cyp2d6-substrate-carbonmangels,10,ARKA-Mordred,,,,,0.558,,,No references provided,,,,,,
+tdcommons/half-life-obach,1,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,,,,0.625,,
+tdcommons/half-life-obach,2,3B_e50_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,,,,0.573,,
+tdcommons/half-life-obach,3,TabPFNv2-rdkit,,,,,,,,No references provided,,,,0.542,,
+tdcommons/half-life-obach,4,TabPFNv2-rdkit-3D,,,,,,,,No references provided,,,,0.489,,
+tdcommons/half-life-obach,5,MolEncoder,,,,,,,,No references provided,,,,0.417,,
+tdcommons/half-life-obach,6,CheMeleon,,,,,,,,No references provided,,,,0.360,,
+tdcommons/cyp2c9-substrate-carbonmangels,1,1B_MPNN_LargeMix-and-Phenomics,,,,,0.478,,,Code Paper,,,,,,
+tdcommons/cyp2c9-substrate-carbonmangels,2,CheMeleon,,,,,0.470,,,No references provided,,,,,,
+tdcommons/cyp2c9-substrate-carbonmangels,3,3B_e50_MPNN_LargeMix-and-Phenomics,,,,,0.407,,,Code Paper,,,,,,
+tdcommons/cyp2c9-substrate-carbonmangels,4,TabPFNv2-rdkit,,,,,0.378,,,No references provided,,,,,,
+tdcommons/cyp2c9-substrate-carbonmangels,5,MHNfs,,,,,0.276,,,Code Paper,,,,,,
+tdcommons/clearance-microsome-az,1,3B_e50_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,,,,0.683,,
+tdcommons/clearance-microsome-az,2,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,,,,0.653,,
+tdcommons/clearance-microsome-az,3,TabPFNv2-rdkit-3D,,,,,,,,No references provided,,,,0.649,,
+tdcommons/clearance-microsome-az,4,TabPFNv2-rdkit,,,,,,,,No references provided,,,,0.640,,
+tdcommons/clearance-microsome-az,5,CheMeleon,,,,,,,,No references provided,,,,0.590,,
+tdcommons/dili,1,vidraft-structure-ensemble-dili,,,,0.933,,,,No references provided,,,,,,
+tdcommons/dili,2,3B_e50_MPNN_LargeMix-and-Phenomics,,,,0.933,,,,Code Paper,,,,,,
+tdcommons/dili,3,TabPFNv2-rdkit-3D,,,,0.930,,,,No references provided,,,,,,
+tdcommons/dili,4,1B_MPNN_LargeMix-and-Phenomics,,,,0.925,,,,Code Paper,,,,,,
+tdcommons/dili,5,CheMeleon,,,,0.916,,,,No references provided,,,,,,
+tdcommons/dili,6,TabPFNv2-rdkit,,,,0.900,,,,No references provided,,,,,,
+tdcommons/bioavailability-ma,1,vidraft-tabpfn-ensemble-bioavail,,,,0.734,,,,No references provided,,,,,,
+tdcommons/bioavailability-ma,2,TabPFNv2-rdkit-3D,,,,0.729,,,,No references provided,,,,,,
+tdcommons/bioavailability-ma,3,TabPFNv2-rdkit,,,,0.728,,,,No references provided,,,,,,
+tdcommons/bioavailability-ma,4,3B_e50_MPNN_LargeMix-and-Phenomics,,,,0.714,,,,Code Paper,,,,,,
+tdcommons/bioavailability-ma,5,CheMeleon,,,,0.698,,,,No references provided,,,,,,
+tdcommons/bioavailability-ma,6,1B_MPNN_LargeMix-and-Phenomics,,,,0.675,,,,Code Paper,,,,,,
+tdcommons/bioavailability-ma,7,MHNfs,,,,0.610,,,,Code Paper,,,,,,
+tdcommons/vdss-lombardo,1,vidraft-tabpfn-vdss,,,,,,,,No references provided,,,,0.726,,
+tdcommons/vdss-lombardo,2,TabPFNv2-rdkit,,,,,,,,No references provided,,,,0.700,,
+tdcommons/vdss-lombardo,3,TabPFNv2-rdkit-3D,,,,,,,,No references provided,,,,0.690,,
+tdcommons/vdss-lombardo,4,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,,,,0.637,,
+tdcommons/vdss-lombardo,5,3B_e50_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,,,,0.600,,
+tdcommons/vdss-lombardo,6,CheMeleon,,,,,,,,No references provided,,,,0.590,,
+tdcommons/cyp3a4-substrate-carbonmangels,1,1B_MPNN_LargeMix-and-Phenomics,,,,0.696,,,,Code Paper,,,,,,
+tdcommons/cyp3a4-substrate-carbonmangels,2,3B_e50_MPNN_LargeMix-and-Phenomics,,,,0.685,,,,Code Paper,,,,,,
+tdcommons/cyp3a4-substrate-carbonmangels,3,TabPFNv2-rdkit,,,,0.634,,,,No references provided,,,,,,
+tdcommons/cyp3a4-substrate-carbonmangels,4,TabPFNv2-rdkit-3D,,,,0.622,,,,No references provided,,,,,,
+tdcommons/cyp3a4-substrate-carbonmangels,5,CheMeleon,,,,0.606,,,,No references provided,,,,,,
+tdcommons/pgp-broccatelli,1,1B_MPNN_LargeMix-and-Phenomics,,,,0.954,,,,Code Paper,,,,,,
+tdcommons/pgp-broccatelli,2,3B_e50_MPNN_LargeMix-and-Phenomics,,,,0.942,,,,Code Paper,,,,,,
+tdcommons/pgp-broccatelli,3,TabPFNv2-rdkit,,,,0.941,,,,No references provided,,,,,,
+tdcommons/pgp-broccatelli,4,TabPFNv2-rdkit-3D,,,,0.930,,,,No references provided,,,,,,
+tdcommons/pgp-broccatelli,5,CheMeleon,,,,0.911,,,,No references provided,,,,,,
+tdcommons/pgp-broccatelli,6,MHNfs,,,,0.834,,,,Code Paper,,,,,,
+tdcommons/caco2-wang,1,mini-PlanE-Seed-Descriptor,,,,,,,,No references provided,0.270,,,,,
+tdcommons/caco2-wang,2,agentomics-ml-caco2-wang,,,,,,,,No references provided,0.277,,,,,
+tdcommons/caco2-wang,3,1B_MPNN_MolGPS-ens_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.282,,,,,
+tdcommons/caco2-wang,4,drylab,,,,,,,,No references provided,0.282,,,,,
+tdcommons/caco2-wang,5,TabPFNv2-maplight_gnn,,,,,,,,No references provided,0.284,,,,,
+tdcommons/caco2-wang,6,TabPFNv2-rdkit,,,,,,,,No references provided,0.285,,,,,
+tdcommons/caco2-wang,7,mini-PlanE-EBasePlanE-ensemble-rich-znorm,,,,,,,,No references provided,0.301,,,,,
+tdcommons/caco2-wang,8,mini-PlanE-E-BasePlanE-seed42,,,,,,,,No references provided,0.314,,,,,
+tdcommons/caco2-wang,9,3B_e50_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.316,,,,,
+tdcommons/caco2-wang,10,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.319,,,,,
+tdcommons/herg,1,agentomics-ml-herg,,,,0.892,,,,No references provided,,,,,,
+tdcommons/herg,2,3B_e50_MPNN_LargeMix-and-Phenomics,,,,0.891,,,,Code Paper,,,,,,
+tdcommons/herg,3,1B_MPNN_LargeMix-and-Phenomics,,,,0.855,,,,Code Paper,,,,,,
+tdcommons/herg,4,TabPFNv2-rdkit,,,,0.849,,,,No references provided,,,,,,
+tdcommons/herg,5,TabPFNv2-rdkit-3D,,,,0.848,,,,No references provided,,,,,,
+tdcommons/herg,6,CheMeleon,,,,0.822,,,,No references provided,,,,,,
+tdcommons/herg,7,1B_MPNN_LargeMix,,,,0.816,,,,Code Paper,,,,,,
+tdcommons/herg,8,MHNfs,,,,0.671,,,,Code Paper,,,,,,
+tdcommons/bbb-martins,1,3B_e50_MPNN_LargeMix-and-Phenomics,,,,0.933,,,,Code Paper,,,,,,
+tdcommons/bbb-martins,2,1B_MPNN_LargeMix-and-Phenomics,,,,0.928,,,,Code Paper,,,,,,
+tdcommons/bbb-martins,3,TabPFNv2-rdkit-3D,,,,0.919,,,,No references provided,,,,,,
+tdcommons/bbb-martins,4,TabPFNv2-rdkit-3D,,,,0.919,,,,No references provided,,,,,,
+tdcommons/bbb-martins,5,TabPFNv2-rdkit,,,,0.912,,,,No references provided,,,,,,
+tdcommons/bbb-martins,6,TabPFNv2-rdkit,,,,0.910,,,,No references provided,,,,,,
+tdcommons/bbb-martins,7,CheMeleon,,,,0.890,,,,No references provided,,,,,,
+tdcommons/bbb-martins,8,MHNfs,,,,0.616,,,,Code Paper,,,,,,
+tdcommons/ames,1,vidraft-ames-ensemble-ref,,,,0.877,,,,No references provided,,,,,,
+tdcommons/ames,2,vidraft-rich-ensemble-ames,,,,0.877,,,,No references provided,,,,,,
+tdcommons/ames,3,vidraft-rich-ensemble-ames,,,,0.877,,,,No references provided,,,,,,
+tdcommons/ames,4,3B_e50_MPNN_LargeMix-and-Phenomics,,,,0.868,,,,Code Paper,,,,,,
+tdcommons/ames,5,1B_MPNN_LargeMix-and-Phenomics,,,,0.866,,,,Code Paper,,,,,,
+tdcommons/ames,6,CheMeleon,,,,0.854,,,,No references provided,,,,,,
+tdcommons/ames,7,TabPFNv2-rdkit-3D,,,,0.847,,,,No references provided,,,,,,
+tdcommons/ames,8,TabPFNv2-rdkit,,,,0.843,,,,No references provided,,,,,,
+tdcommons/ld50-zhu,1,CheMeleon,,,,,,,,No references provided,0.526,,,,,
+tdcommons/ld50-zhu,2,TabPFNv2-rdkit,,,,,,,,No references provided,0.600,,,,,
+tdcommons/ld50-zhu,3,TabPFNv2-rdkit-3D,,,,,,,,No references provided,0.605,,,,,
+tdcommons/ld50-zhu,4,1B_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.614,,,,,
+tdcommons/ld50-zhu,5,3B_e50_MPNN_LargeMix-and-Phenomics,,,,,,,,Code Paper,0.625,,,,,

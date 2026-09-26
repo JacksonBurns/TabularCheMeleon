@@ -358,11 +358,45 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
 
         loss = F.cross_entropy(logits.view(-1, self.num_bins), target_bins.view(-1))
         pred_mean, _ = self._distribution_to_moments(logits)
-        mae = F.l1_loss(pred_mean, targets)
 
         batch_size = batch["x"].size(0)
+        total_mae = F.l1_loss(pred_mean, targets)
+
         self.log("val/loss", loss, on_epoch=True, prog_bar=True, batch_size=batch_size)
-        self.log("val/mae", mae, on_epoch=True, prog_bar=True, batch_size=batch_size)
+        self.log("val/mae_overall", total_mae, on_epoch=True, prog_bar=True, batch_size=batch_size)
+
+        # 1. Compute MAE per episode: shape (B,)
+        per_episode_mae = (pred_mean - targets).abs().mean(dim=(1, 2))
+
+        # 2. Get individual context length per episode: shape (B,)
+        ctx_lens = torch.tensor(batch["context_lens"], device=targets.device)
+
+        few_shot_mask = ctx_lens < 32
+        rich_context_mask = ctx_lens >= 64
+
+        # 3. Log using the actual count of matching episodes as batch_size
+        if few_shot_mask.any():
+            self.log(
+                "val/mae_few_shot",
+                per_episode_mae[few_shot_mask].mean(),
+                on_step=False,
+                on_epoch=True,
+                prog_bar=False,
+                batch_size=int(few_shot_mask.sum()),
+            )
+
+        if rich_context_mask.any():
+            self.log(
+                "val/mae_rich_context",
+                per_episode_mae[rich_context_mask].mean(),
+                on_step=False,
+                on_epoch=True,
+                prog_bar=False,
+                batch_size=int(rich_context_mask.sum()),
+            )
+
+        return loss
+
         return loss
 
     def configure_optimizers(self):
@@ -373,80 +407,6 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
             eta_min=1e-6,
         )
         return {"optimizer": optimizer, "lr_scheduler": {"scheduler": scheduler, "interval": "epoch"}}
-
-    # ==========================================================================
-    # 5. Bagged / Prompt-Ensembled Inference
-    # ==========================================================================
-    @torch.inference_mode()
-    def predict_bagged(
-        self,
-        x_context: torch.Tensor,
-        y_context: torch.Tensor,
-        x_query: torch.Tensor,
-        num_bags: int = 16,
-        bag_fraction: float = 0.85,
-        chunk_size: int = 64,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Runs prompt-ensembled inference across multiple subsamples of the context set.
-
-        Returns:
-            mean: (N_query, 1) Expected prediction
-            uncertainty: (N_query, 1) Combined Aleatoric + Epistemic predictive standard deviation
-        """
-        self.eval()
-        device = self.device
-
-        if y_context.dim() == 1:
-            y_context = y_context.unsqueeze(-1)
-
-        n_total_ctx = x_context.size(0)
-        num_queries = x_query.size(0)
-        bag_size = max(8, int(n_total_ctx * bag_fraction))
-
-        all_query_probs = []
-
-        # Stream queries in fixed chunks
-        for q_idx in range(0, num_queries, chunk_size):
-            x_q_chunk = x_query[q_idx : q_idx + chunk_size].unsqueeze(0).to(device)
-            current_q_len = x_q_chunk.size(1)
-            dummy_y = torch.zeros(1, current_q_len, 1, device=device)
-
-            bag_probs = []
-            for _ in range(num_bags):
-                # Subsample context set without replacement
-                perm = torch.randperm(n_total_ctx)[:bag_size]
-                x_ctx_sub = x_context[perm].unsqueeze(0).to(device)
-                y_ctx_sub = y_context[perm].unsqueeze(0).to(device)
-
-                x_combined = torch.cat([x_ctx_sub, x_q_chunk], dim=1)
-                y_combined = torch.cat([y_ctx_sub, dummy_y], dim=1)
-
-                batch_dict = {
-                    "x": x_combined,
-                    "y": y_combined,
-                    "context_lens": [bag_size],
-                    "query_len": current_q_len,
-                    "sample_mask": None,
-                }
-
-                logits = self(batch_dict).squeeze(0)  # (current_q_len, num_bins)
-                probs = F.softmax(logits, dim=-1)
-                bag_probs.append(probs)
-
-            # Average probability distribution across all context bags
-            avg_probs = torch.stack(bag_probs, dim=0).mean(dim=0)  # (current_q_len, num_bins)
-            all_query_probs.append(avg_probs.cpu())
-
-        total_probs = torch.cat(all_query_probs, dim=0).to(device)  # (N_query, num_bins)
-
-        # Compute final expected value and total predictive standard deviation
-        expected_y = torch.sum(total_probs * self.bin_centers, dim=-1, keepdim=True)
-        total_var = torch.sum(total_probs * ((self.bin_centers - expected_y) ** 2), dim=-1, keepdim=True)
-        pred_std = torch.sqrt(total_var)
-
-        return expected_y.cpu(), pred_std.cpu()
-
 
 # ==============================================================================
 # 6. DataModule & Training Script
@@ -571,7 +531,7 @@ if __name__ == "__main__":
 
     logger = TensorBoardLogger(save_dir=args.log_dir, name="inductive_tabular_chemeleon", default_hp_metric=False)
     checkpoint_callback = ModelCheckpoint(monitor="val/loss", mode="min", save_top_k=1, filename="best-{epoch:02d}-{val_loss:.4f}")
-    early_stopping = EarlyStopping(monitor="val/loss", patience=10, mode="min")
+    early_stopping = EarlyStopping(monitor="val/loss", patience=20, mode="min")
 
     trainer = pl.Trainer(
         max_epochs=args.max_epochs,
