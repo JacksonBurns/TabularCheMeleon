@@ -7,7 +7,7 @@ import pandas as pd
 import polaris as po
 from polaris.utils.types import TargetType
 
-from inference import TabularCheMeleonRegressor
+from tabularchemeleonregressor import TabularCheMeleonRegressor
 from featurize import CheMeleonEmbedder
 
 def get_leaderboard_snippet(benchmark_name, current_perf, leaderboard_df, metric):
@@ -79,14 +79,14 @@ checkpoint: {reg_ckpt}
             print(f"Skipping benchmark {benchmark_name} as it is not a regression task.")
             continue
 
-        predictions = reg.predict_regression(
-            x_context=get_chemeleon_embeddings(train_smiles_list),
+        predictions = reg.fit_predict(
+            X_context=get_chemeleon_embeddings(train_smiles_list),
             y_context=torch.tensor(train_labels_list, dtype=torch.float32),
-            x_query=get_chemeleon_embeddings(test_df[smiles_col].to_list())
-        )[0]
+            X_query=get_chemeleon_embeddings(test_df[smiles_col].to_list())
+        )
         torch.cuda.empty_cache()
 
-        results = benchmark.evaluate(predictions.numpy(force=True).flatten()).results
+        results = benchmark.evaluate(predictions.flatten()).results
         performance = results.query(
             f"Metric == '{benchmark.main_metric.label}'"
         )["Score"].values[0]

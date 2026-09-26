@@ -11,6 +11,8 @@ import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping
 from lightning.pytorch.loggers import TensorBoardLogger
 
+from config import MIN_CONTEXT, MAX_CONTEXT, NUM_QUERIES
+
 
 # ==============================================================================
 # 1. Chemically-Informed Synthetic Task Prior
@@ -88,9 +90,9 @@ class InMemoryMoleculeICLDataset(Dataset):
     def __init__(
         self,
         embeddings: torch.Tensor,
-        min_context: int = 16,
-        max_context: int = 128,
-        num_queries: int = 32,
+        min_context: int = MIN_CONTEXT,
+        max_context: int = MAX_CONTEXT,
+        num_queries: int = NUM_QUERIES,
         num_episodes: int = 10_000,
     ):
         self.embeddings = embeddings
@@ -421,9 +423,9 @@ class TabularCheMeleonDataModule(pl.LightningDataModule):
         val_split: float = 0.2,
         episodes_per_epoch: int = 10_000,
         val_episodes: int = 1_000,
-        min_context: int = 16,
-        max_context: int = 128,
-        num_queries: int = 32,
+        min_context: int = MIN_CONTEXT,
+        max_context: int = MAX_CONTEXT,
+        num_queries: int = NUM_QUERIES,
     ):
         super().__init__()
         self.embeddings_path = Path(embeddings_path)
@@ -496,14 +498,15 @@ if __name__ == "__main__":
     parser.add_argument("--episodes-per-epoch", type=int, default=10_000)
     parser.add_argument("--val-episodes", type=int, default=1_000)
     parser.add_argument("--max-epochs", type=int, default=50)
+    parser.add_argument("--patience", type=int, default=20)
     parser.add_argument("--d-model", type=int, default=256)
     parser.add_argument("--nhead", type=int, default=8)
     parser.add_argument("--num-layers", type=int, default=8)
     parser.add_argument("--num-bins", type=int, default=64)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
-    parser.add_argument("--min-context", type=int, default=16)
-    parser.add_argument("--max-context", type=int, default=512)
-    parser.add_argument("--num-queries", type=int, default=64)
+    parser.add_argument("--min-context", type=int, default=MIN_CONTEXT)
+    parser.add_argument("--max-context", type=int, default=MAX_CONTEXT)
+    parser.add_argument("--num-queries", type=int, default=NUM_QUERIES)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
     parser.add_argument("--log-dir", type=str, default="tabular_chemeleon_logs")
     args = parser.parse_args()
@@ -531,7 +534,7 @@ if __name__ == "__main__":
 
     logger = TensorBoardLogger(save_dir=args.log_dir, name="inductive_tabular_chemeleon", default_hp_metric=False)
     checkpoint_callback = ModelCheckpoint(monitor="val/loss", mode="min", save_top_k=1, filename="best-{epoch:02d}-{val_loss:.4f}")
-    early_stopping = EarlyStopping(monitor="val/loss", patience=20, mode="min")
+    early_stopping = EarlyStopping(monitor="val/loss", patience=args.patience, mode="min")
 
     trainer = pl.Trainer(
         max_epochs=args.max_epochs,
