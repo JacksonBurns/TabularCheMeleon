@@ -349,8 +349,8 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
             mae = F.l1_loss(pred_mean, targets)
 
         batch_size = batch["x"].size(0)
-        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=batch_size)
-        self.log("train/mae", mae, on_step=True, on_epoch=True, prog_bar=False, batch_size=batch_size)
+        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=batch_size, sync_dist=True)
+        self.log("train/mae", mae, on_step=True, on_epoch=True, prog_bar=False, batch_size=batch_size, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -364,8 +364,8 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
         batch_size = batch["x"].size(0)
         total_mae = F.l1_loss(pred_mean, targets)
 
-        self.log("val/loss", loss, on_epoch=True, prog_bar=True, batch_size=batch_size)
-        self.log("val/mae_overall", total_mae, on_epoch=True, prog_bar=True, batch_size=batch_size)
+        self.log("val/loss", loss, on_epoch=True, prog_bar=True, batch_size=batch_size, sync_dist=True)
+        self.log("val/mae_overall", total_mae, on_epoch=True, prog_bar=True, batch_size=batch_size, sync_dist=True)
 
         # 1. Compute MAE per episode: shape (B,)
         per_episode_mae = (pred_mean - targets).abs().mean(dim=(1, 2))
@@ -385,6 +385,7 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
                 on_epoch=True,
                 prog_bar=False,
                 batch_size=int(few_shot_mask.sum()),
+                sync_dist=True,
             )
 
         if rich_context_mask.any():
@@ -395,9 +396,8 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
                 on_epoch=True,
                 prog_bar=False,
                 batch_size=int(rich_context_mask.sum()),
+                sync_dist=True,
             )
-
-        return loss
 
         return loss
 
@@ -539,7 +539,6 @@ if __name__ == "__main__":
     trainer = pl.Trainer(
         max_epochs=args.max_epochs,
         accelerator="auto",
-        devices=1,
         logger=logger,
         callbacks=[checkpoint_callback, early_stopping],
         log_every_n_steps=10,
