@@ -20,64 +20,195 @@ from config import MIN_CONTEXT, MAX_CONTEXT, NUM_QUERIES
 
 class ChemicallyInformedSyntheticPrior:
     """
-    Simulates realistic Structure-Activity Relationship (SAR) landscapes:
-    - Global linear/shallow physicochemical trends (MW/lipophilicity baselines)
-    - Localized RBF pharmacophore binding modes around active chemical clusters
-    - Activity cliffs: steep, localized non-linear drops in potency between close analogs
-    - Heteroscedastic observational assay noise
+    Hierarchical Mixture of Chemical Task Priors:
+    1. Pharmacophore Decision Trees (Conjunctions / 'AND' logic / Scaffold rules)
+    2. Cosine-Normalized Kernel GP (Calibrated via Median Heuristic)
+    3. Deep Residual MLP (Complex non-linear metabolic response surfaces)
+    4. Sparse Additive + Interaction Prior (Physicochemical baselines like LogS / LogP)
+    
+    Includes bidirectional activity cliffs, assay censoring, and heavy-tailed noise.
     """
     def __init__(self, embed_dim: int):
         self.embed_dim = embed_dim
 
-    @torch.no_grad()
-    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+    # =========================================================================
+    # Sub-Prior 1: Random Pharmacophore Decision Tree (Logic & Conjunctions)
+    # =========================================================================
+    def _tree_prior(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Args:
-            x: (N_molecules, embed_dim)
-        Returns:
-            y: (N_molecules, 1) standardized continuous bioactivity targets
+        Simulates scaffold SAR rules: nested step-function decision surfaces.
         """
         device = x.device
         n_samples = x.size(0)
+        depth = random.randint(2, 4)
+        
+        # Start with base activity
+        y = torch.zeros(n_samples, 1, device=device)
+        
+        for _ in range(depth):
+            # Hyperplane split in embedding space
+            w = torch.randn(self.embed_dim, 1, device=device)
+            w = w / (torch.norm(w) + 1e-7)
+            proj = x @ w
+            split_threshold = torch.quantile(proj, random.uniform(0.3, 0.7))
+            
+            # Step-change in activity when passing the split boundary
+            delta = random.uniform(1.0, 3.0) * (1 if random.random() > 0.5 else -1)
+            y = torch.where(proj >= split_threshold, y + delta, y - delta)
+            
+        return y
 
-        # 1. Global Physicochemical Trend (Linear projection)
-        w_global = torch.randn(self.embed_dim, 1, device=device) / math.sqrt(self.embed_dim)
-        y_global = x @ w_global
+    # =========================================================================
+    # Sub-Prior 2: Cosine-Metric Kernel GP with Median Bandwidth Heuristic
+    # =========================================================================
+    def _kernel_gp_prior(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Simulates multi-pocket pharmacophore binding using normalized angular similarity
+        with dynamically calibrated cluster bandwidths.
+        """
+        device = x.device
+        n_samples = x.size(0)
+        
+        # 1. Cosine normalization (chemical similarity is angular, not Euclidean magnitude)
+        x_norm = F.normalize(x, p=2, dim=-1)
+        
+        # 2. Select 2-5 active lead scaffolds as centroids
+        num_centroids = random.randint(2, 5)
+        centroid_idx = torch.randperm(n_samples)[:num_centroids]
+        centroids = x_norm[centroid_idx]
+        
+        # Cosine distance: 1 - cos(theta) in range [0, 2]
+        cosine_dist = 1.0 - (x_norm @ centroids.T)  # (N, num_centroids)
+        
+        # 3. Median Heuristic: Dynamically scale gamma so kernels span local analogs
+        dist_sample = cosine_dist.flatten()
+        median_dist = torch.median(dist_sample) + 1e-5
+        # Target bandwidth ensures RBF covers the nearest 5-15% of analogs
+        lengthscale = median_dist * random.uniform(0.5, 1.5)
+        gamma = 1.0 / (2.0 * (lengthscale ** 2))
+        
+        # 4. Bidirectional binding affinities (+ for agonists/inhibitors, - for allosteric disruption)
+        amplitudes = torch.empty(num_centroids, 1, device=device).uniform_(-3.5, 3.5)
+        y = (torch.exp(-gamma * (cosine_dist ** 2)) @ amplitudes)
+        return y
 
-        # 2. Localized Binding Pockets (RBF Pharmacophores centered on actual molecules)
-        num_pharmacophores = random.randint(1, 4)
-        active_indices = torch.randperm(n_samples)[:num_pharmacophores]
-        centroids = x[active_indices]  # (num_pharmacophores, embed_dim)
+    # =========================================================================
+    # Sub-Prior 3: Deep Residual MLP (ADMET Metabolic Complexity)
+    # =========================================================================
+    def _deep_resnet_prior(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Simulates biological clearance, permeability, and microsomal metabolism.
+        """
+        device = x.device
+        hidden_dim = random.choice([32, 64, 128])
+        
+        # Input layer
+        w1 = torch.randn(self.embed_dim, hidden_dim, device=device) / math.sqrt(self.embed_dim)
+        b1 = torch.zeros(hidden_dim, device=device)
+        h = F.gelu(x @ w1 + b1)
+        
+        # Residual block
+        w2 = torch.randn(hidden_dim, hidden_dim, device=device) / math.sqrt(hidden_dim)
+        h = h + F.silu(h @ w2)
+        
+        # Readout head
+        w_out = torch.randn(hidden_dim, 1, device=device) / math.sqrt(hidden_dim)
+        y = h @ w_out
+        return y
 
-        dists = torch.cdist(x, centroids, p=2)  # (N, num_pharmacophores)
-        gamma = random.uniform(0.5, 3.0)
-        amplitudes = torch.empty(num_pharmacophores, 1, device=device).uniform_(1.5, 4.0)
-        y_binding = torch.sum(amplitudes.T * torch.exp(-gamma * (dists ** 2)), dim=1, keepdim=True)
+    # =========================================================================
+    # Sub-Prior 4: Sparse Additive + Interaction (LogS / Lipophilicity)
+    # =========================================================================
+    def _sparse_interaction_prior(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Simulates physical properties (MW, LogP, TPSA, Solubility baselines).
+        """
+        device = x.device
+        n_samples = x.size(0)
+        
+        # Pick 3 to 8 dominant sparse active dimensions
+        k_features = min(self.embed_dim, random.randint(3, 8))
+        active_dims = torch.randperm(self.embed_dim)[:k_features]
+        x_sub = x[:, active_dims]
+        
+        # Linear trend
+        w = torch.randn(k_features, 1, device=device) / math.sqrt(k_features)
+        y = x_sub @ w
+        
+        # Second-order interaction term (x_i * x_j)
+        if k_features >= 2:
+            i, j = active_dims[0], active_dims[1]
+            y += 0.5 * (x[:, i : i + 1] * x[:, j : j + 1])
+            
+        return y
 
-        # 3. Activity Cliffs (Sudden discontinuous drop for a fraction of close analogs)
-        cliff_mask = torch.zeros(n_samples, 1, device=device)
-        if random.random() < 0.6:  # 60% of assays have steep activity cliffs
-            cliff_center_idx = active_indices[0]
-            dist_to_cliff = torch.norm(x - x[cliff_center_idx], dim=1, keepdim=True)
-            # Find close structural analogs
-            cliff_analog_indices = (dist_to_cliff < 1.2) & (dist_to_cliff > 0.05)
-            # Apply severe negative potency penalty to create the cliff
-            cliff_mask[cliff_analog_indices] = -random.uniform(2.5, 5.0)
-
-        # 4. Composite Target
-        y_raw = y_global + y_binding + cliff_mask
-
-        # 5. Heteroscedastic / Heavy-Tailed Assay Noise
-        noise_std = random.uniform(0.05, 0.25)
-        # 20% probability of Student-t heavy-tailed experimental outlier noise
-        if random.random() < 0.2:
-            noise = torch.distributions.StudentT(df=3.0).sample(y_raw.shape).to(device) * noise_std
+    # =========================================================================
+    # Composite Prior Call
+    # =========================================================================
+    @torch.no_grad()
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+        device = x.device
+        n_samples = x.size(0)
+        
+        # 1. Randomly sample the primary functional landscape
+        p = random.random()
+        if p < 0.35:
+            # 35% Pharmacophore Decision Rules (PKIS / Kinases)
+            y_core = self._tree_prior(x)
+        elif p < 0.70:
+            # 35% Calibrated Cosine Kernel GP (Binding affinities)
+            y_core = self._kernel_gp_prior(x)
+        elif p < 0.88:
+            # 18% Deep Residual Nonlinearity (Clearance, Metabolism)
+            y_core = self._deep_resnet_prior(x)
         else:
-            noise = torch.randn_like(y_raw) * noise_std
+            # 12% Sparse Additive + Interactions (Solubility, Lipophilicity)
+            y_core = self._sparse_interaction_prior(x)
 
-        y = y_raw + noise
+        # 2. Add Weak Global Linear Physicochemical Baseline
+        w_bg = torch.randn(self.embed_dim, 1, device=device) / math.sqrt(self.embed_dim)
+        y = y_core + (0.35 * (x @ w_bg))
 
-        # Standardize target to N(0, 1) across the episode
+        # 3. Bidirectional Activity Cliffs (Magic Methyl / Chiral Drops & Jumps)
+        if random.random() < 0.65:
+            cliff_count = random.randint(1, 3)
+            x_norm = F.normalize(x, p=2, dim=-1)
+            cosine_sim = x_norm @ x_norm.T
+            
+            for _ in range(cliff_count):
+                center_idx = random.randint(0, n_samples - 1)
+                # Structural analogs with high cosine similarity (0.85 to 0.98)
+                sims = cosine_sim[center_idx]
+                analog_mask = (sims > 0.85) & (sims < 0.98)
+                
+                if analog_mask.any():
+                    # Directional jump or drop
+                    cliff_magnitude = random.uniform(2.5, 5.0) * (1 if random.random() > 0.5 else -1)
+                    y[analog_mask] += cliff_magnitude
+
+        # 4. Realistic Assay Censoring (Lower / Upper Detection Limits)
+        # Wet-lab screens frequently plateau at 0% or 100% inhibition
+        if random.random() < 0.25:
+            if random.random() > 0.5:
+                # Lower Limit of Detection (LOD)
+                floor_val = torch.quantile(y, random.uniform(0.05, 0.15))
+                y = torch.clamp(y, min=floor_val)
+            else:
+                # Upper Limit of Quantification (ULOQ)
+                ceil_val = torch.quantile(y, random.uniform(0.85, 0.95))
+                y = torch.clamp(y, max=ceil_val)
+
+        # 5. Composite Heteroscedastic Noise
+        noise_std = random.uniform(0.03, 0.20)
+        if random.random() < 0.25:
+            # Heavy-tailed experimental artifact noise
+            noise = torch.distributions.StudentT(df=2.5).sample(y.shape).to(device) * noise_std
+        else:
+            noise = torch.randn_like(y) * noise_std
+            
+        y = y + noise
+
+        # 6. Standardize Output Episode to N(0, 1)
         y = (y - y.mean()) / (y.std() + 1e-7)
         return y
 
