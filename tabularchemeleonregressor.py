@@ -3,6 +3,7 @@ from typing import Literal, Optional, Tuple, Union
 import numpy as np
 import torch
 import torch.nn.functional as F
+
 from sklearn.base import BaseEstimator, RegressorMixin
 
 from tabularchemeleon import TabularCheMeleonLightningModule
@@ -14,10 +15,12 @@ class TabularCheMeleonRegressor(BaseEstimator, RegressorMixin):
     Scikit-learn compatible In-Context Bioactivity Regressor.
     
     Features:
-    - Angular Cosine kNN + Diversity Context Bagging matching the pre-training prior.
-    - True Monte Carlo context subsampling for small and large assays alike.
-    - Vectorized multi-bag parallel forward passes (10x faster inference).
-    - Z-score target alignment preventing saturation on skewed screening assays.
+    - Chemically-sorted query batching to prevent cross-scaffold context dilution.
+    - Angular Cosine kNN + Diversity Context Bagging aligned with empirical SAR priors.
+    - True Monte Carlo context subsampling across both few-shot and rich-context regimes.
+    - Vectorized multi-bag parallel forward passes on GPU (single batch execution).
+    - Z-score normalization preventing target clamping on skewed screening assays.
+    - Supports continuous bioactivity regression and thresholded classification.
     """
     def __init__(
         self,
@@ -41,7 +44,6 @@ class TabularCheMeleonRegressor(BaseEstimator, RegressorMixin):
         self.knn_ratio = knn_ratio
         self.clip_target_norm = clip_target_norm
 
-        # Load checkpoint and setup buffers
         self.model = TabularCheMeleonLightningModule.load_from_checkpoint(checkpoint_path)
         self.model.to(self.device)
         self.model.eval()
@@ -140,10 +142,16 @@ class TabularCheMeleonRegressor(BaseEstimator, RegressorMixin):
         return self.X_context_[final_indices], self.y_context_norm_[final_indices]
 
     @torch.inference_mode()
-    def predict_with_uncertainty(
+    def predict_distribution(
         self,
         X: Union[np.ndarray, torch.Tensor],
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> torch.Tensor:
+        """
+        Evaluates bagged predictive distributions over the discretized Riemann bins.
+        
+        Returns:
+            probs: (N_query, num_bins) tensor of probability distributions on CPU.
+        """
         if not self.is_fitted_:
             raise RuntimeError("Model is not fitted. Call fit(X, y) before predict().")
 
@@ -155,28 +163,41 @@ class TabularCheMeleonRegressor(BaseEstimator, RegressorMixin):
         num_queries = X_query.size(0)
         n_total_ctx = self.X_context_.size(0)
 
+        # ----------------------------------------------------------------------
+        # Chemically sort queries to prevent context dilution across scaffolds
+        # ----------------------------------------------------------------------
+        if num_queries > self.chunk_size:
+            try:
+                q_centered = X_query - X_query.mean(dim=0, keepdim=True)
+                _, _, V = torch.pca_lowrank(q_centered, q=1)
+                sort_order = torch.argsort((q_centered @ V[:, :1]).squeeze(-1))
+                unsort_order = torch.argsort(sort_order)
+                X_query_sorted = X_query[sort_order]
+            except Exception:
+                sort_order = None
+                X_query_sorted = X_query
+        else:
+            sort_order = None
+            X_query_sorted = X_query
+
         # Determine effective context bag size with proper subsampling
         if n_total_ctx > self.max_context_size:
             bag_size = self.max_context_size
             effective_num_bags = self.num_bags
         elif n_total_ctx > MIN_CONTEXT:
-            # Subsample a fraction so each bag sees a genuinely different subset
             bag_size = max(MIN_CONTEXT, int(n_total_ctx * self.bag_fraction))
             effective_num_bags = self.num_bags
         else:
-            # Very small assays: use all context points in a single forward pass
             bag_size = n_total_ctx
             effective_num_bags = 1
 
-        all_means = []
-        all_stds = []
+        all_chunk_probs = []
 
         # Stream candidate queries in chunks
         for q_idx in range(0, num_queries, self.chunk_size):
-            x_q_chunk = X_query[q_idx : q_idx + self.chunk_size].to(self.device)
+            x_q_chunk = X_query_sorted[q_idx : q_idx + self.chunk_size].to(self.device)
             current_q_len = x_q_chunk.size(0)
 
-            # Sample all context bags for this query chunk
             ctx_x_list = []
             ctx_y_list = []
             for _ in range(effective_num_bags):
@@ -184,7 +205,7 @@ class TabularCheMeleonRegressor(BaseEstimator, RegressorMixin):
                 ctx_x_list.append(x_c)
                 ctx_y_list.append(y_c)
 
-            # Vectorized multi-bag batch construction: (B_bags, bag_size + q_len, D)
+            # Vectorized multi-bag batch construction: (effective_num_bags, bag_size + q_len, D)
             x_ctx_batch = torch.stack(ctx_x_list, dim=0)
             y_ctx_batch = torch.stack(ctx_y_list, dim=0)
 
@@ -208,27 +229,69 @@ class TabularCheMeleonRegressor(BaseEstimator, RegressorMixin):
 
             # Average probability distributions across context bags
             avg_probs = probs.mean(dim=0)  # (current_q_len, num_bins)
+            all_chunk_probs.append(avg_probs.cpu())
 
-            # Continuous moments in normalized space
-            expected_y_norm = torch.sum(avg_probs * self.bin_centers, dim=-1, keepdim=True)
-            var_norm = torch.sum(avg_probs * ((self.bin_centers - expected_y_norm) ** 2), dim=-1, keepdim=True)
-            std_norm = torch.sqrt(var_norm)
+        total_probs = torch.cat(all_chunk_probs, dim=0)  # (num_queries, num_bins)
 
-            # De-standardize back to original physical assay units
-            y_pred = (expected_y_norm * self.y_scale_) + self.y_mean_
-            std_pred = std_norm * self.y_scale_
+        # Restore original query indexing order if sorted
+        if sort_order is not None:
+            total_probs = total_probs[unsort_order.cpu()]
 
-            all_means.append(y_pred.cpu())
-            all_stds.append(std_pred.cpu())
+        return total_probs
 
-        y_preds = torch.cat(all_means, dim=0).numpy().squeeze(-1)
-        y_stds = torch.cat(all_stds, dim=0).numpy().squeeze(-1)
+    def predict_with_uncertainty(
+        self,
+        X: Union[np.ndarray, torch.Tensor],
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Predicts continuous values along with predictive uncertainty standard deviations.
+        
+        Returns:
+            y_preds: (N,) Expected value in original physical units (e.g. pIC50, LogS).
+            y_stds:  (N,) Combined predictive uncertainty standard deviation in physical units.
+        """
+        probs = self.predict_distribution(X)  # (N, num_bins)
+        bin_centers = self.bin_centers.cpu()  # (num_bins,)
 
-        return y_preds, y_stds
+        # Compute moments in normalized space
+        expected_y_norm = torch.sum(probs * bin_centers, dim=-1)  # (N,)
+        var_norm = torch.sum(probs * ((bin_centers - expected_y_norm.unsqueeze(-1)) ** 2), dim=-1)  # (N,)
+        std_norm = torch.sqrt(torch.clamp(var_norm, min=0.0))  # (N,)
+
+        # De-standardize back to original physical assay units
+        y_pred = (expected_y_norm * self.y_scale_) + self.y_mean_
+        std_pred = std_norm * self.y_scale_
+
+        return y_pred.numpy(), std_pred.numpy()
 
     def predict(self, X: Union[np.ndarray, torch.Tensor]) -> np.ndarray:
+        """Standard scikit-learn continuous regression interface."""
         preds, _ = self.predict_with_uncertainty(X)
         return preds
+
+    def predict_classification(
+        self,
+        X: Union[np.ndarray, torch.Tensor],
+        active_threshold: float,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Runs binary active/inactive classification via Riemann posterior tail integration.
+        
+        Args:
+            X: Candidate molecule embeddings
+            active_threshold: Cutoff in raw assay units (e.g. 6.0 for pIC50 >= 1 uM)
+            
+        Returns:
+            prob_active: (N,) Posterior probability P(Y >= threshold) in [0.0, 1.0]
+            pred_class: (N,) Binary classification call (1 for Active, 0 for Inactive)
+        """
+        probs = self.predict_distribution(X)  # (N, num_bins)
+        threshold_norm = (active_threshold - self.y_mean_) / self.y_scale_
+        active_mask = (self.bin_centers.cpu() >= threshold_norm)
+
+        prob_active = probs[:, active_mask].sum(dim=-1).numpy()
+        pred_class = (prob_active >= 0.5).astype(int)
+        return prob_active, pred_class
 
     def fit_predict(
         self,
