@@ -11,7 +11,12 @@ import lightning.pytorch as pl
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping
 from lightning.pytorch.loggers import TensorBoardLogger
 
-from config import MIN_CONTEXT, MAX_CONTEXT, NUM_QUERIES
+try:
+    from config import MIN_CONTEXT, MAX_CONTEXT, NUM_QUERIES
+except ImportError:
+    MIN_CONTEXT = 32
+    MAX_CONTEXT = 1024
+    NUM_QUERIES = 64
 
 
 # ==============================================================================
@@ -20,48 +25,51 @@ from config import MIN_CONTEXT, MAX_CONTEXT, NUM_QUERIES
 
 class EmpiricalBioactivityPrior:
     """
-    Bioactivity prior using empirical chemical displacement vectors:
-    - Directions derived from actual molecule pairs (x_i - x_j) on the data manifold
-    - Free-Wilson additive SAR (substituent vectors and second-order synergy)
-    - Multi-pocket cooperative Hill kinetics (sigmoidal receptor binding curves)
-    - Non-monotonic ADMET surfaces (Hansch lipophilicity and solubility parabolas)
-    - Structural activity cliffs strictly on true analogs (0.80 < sim < 0.98)
-    - Experimental plate censoring (LOD / ULOQ) & heavy-tailed assay noise
+    Bioactivity prior generating continuous SAR response manifolds:
+    1. Local Multi-Pocket Cosine GP (angular distance with adaptive bandwidth)
+    2. Cooperative Receptor Hill Kinetics (sigmoidal dose-response curves)
+    3. Free-Wilson Additive SAR (directional PCA empirical projections + synergy)
+    4. Non-monotonic ADMET Surfaces (Hansch lipophilicity & solubility parabolas)
+    5. Structural activity cliffs strictly on close analogs (0.80 < sim < 0.98)
+    6. Heteroscedastic noise & plate censoring limits
     """
     def __init__(self, embed_dim: int):
         self.embed_dim = embed_dim
 
     def _sample_empirical_directions(self, x: torch.Tensor, k: int) -> torch.Tensor:
-        """Derives k unit direction vectors from actual chemical displacements in the batch."""
+        """Derives k orthogonal axes from empirical chemical variation via truncated SVD."""
         n_samples = x.size(0)
-        idx_a = torch.randint(0, n_samples, (k,), device=x.device)
-        idx_b = torch.randint(0, n_samples, (k,), device=x.device)
-        diffs = x[idx_a] - x[idx_b]
-        norms = torch.norm(diffs, p=2, dim=-1, keepdim=True)
+        k_clamped = min(k, n_samples - 1, self.embed_dim)
+        if k_clamped < 1:
+            return torch.randn(self.embed_dim, k, device=x.device) / math.sqrt(self.embed_dim)
 
-        zero_mask = norms < 1e-5
-        if zero_mask.any():
-            random_diffs = torch.randn_like(diffs)
-            diffs = torch.where(zero_mask, random_diffs, diffs)
-            norms = torch.norm(diffs, p=2, dim=-1, keepdim=True) + 1e-6
+        x_centered = x - x.mean(dim=0, keepdim=True)
+        try:
+            _, _, V = torch.pca_lowrank(x_centered, q=k_clamped)
+            proj = V[:, :k_clamped]
+            if k_clamped < k:
+                pad = torch.randn(self.embed_dim, k - k_clamped, device=x.device) / math.sqrt(self.embed_dim)
+                proj = torch.cat([proj, pad], dim=1)
+            return proj
+        except Exception:
+            return torch.randn(self.embed_dim, k, device=x.device) / math.sqrt(self.embed_dim)
 
-        return (diffs / norms).T  # (embed_dim, k)
-
-    def _free_wilson_prior(self, x: torch.Tensor) -> torch.Tensor:
+    def _cosine_gp_prior(self, x: torch.Tensor) -> torch.Tensor:
         device = x.device
-        k_axes = min(self.embed_dim, random.randint(3, 8))
-        proj_matrix = self._sample_empirical_directions(x, k_axes)
-        projections = x @ proj_matrix
+        n_samples = x.size(0)
+        x_norm = F.normalize(x, p=2, dim=-1)
 
-        y = torch.zeros(x.size(0), 1, device=device)
-        for i in range(k_axes):
-            weight = random.uniform(0.8, 2.5) * (1 if random.random() > 0.5 else -1)
-            y += weight * (torch.tanh(projections[:, i : i + 1]) if random.random() > 0.5 else projections[:, i : i + 1])
+        num_centroids = random.randint(2, 5)
+        centroid_idx = torch.randperm(n_samples, device=device)[:num_centroids]
+        centroids = x_norm[centroid_idx]
 
-        if k_axes >= 2:
-            synergy = random.uniform(-1.5, 1.5)
-            y += synergy * (projections[:, 0:1] * projections[:, 1:2])
-        return y
+        angular_dist = 1.0 - (x_norm @ centroids.T)  # (N, num_centroids) in [0, 2]
+        median_dist = torch.median(angular_dist) + 1e-5
+        lengthscale = median_dist * random.uniform(0.6, 1.8)
+        gamma = 1.0 / (2.0 * (lengthscale ** 2) + 1e-6)
+
+        amplitudes = torch.empty(num_centroids, 1, device=device).uniform_(-3.5, 3.5)
+        return torch.exp(-gamma * (angular_dist ** 2)) @ amplitudes
 
     def _hill_kinetics_prior(self, x: torch.Tensor) -> torch.Tensor:
         device = x.device
@@ -80,7 +88,22 @@ class EmpiricalBioactivityPrior:
         kd = torch.empty(1, num_pockets, device=device).uniform_(1.5, 4.5) ** hill_coeff
         e_max = torch.empty(num_pockets, 1, device=device).uniform_(2.0, 5.0)
 
-        y = ((ligand_potency ** hill_coeff) / (kd + (ligand_potency ** hill_coeff))) @ e_max
+        return ((ligand_potency ** hill_coeff) / (kd + (ligand_potency ** hill_coeff))) @ e_max
+
+    def _free_wilson_prior(self, x: torch.Tensor) -> torch.Tensor:
+        device = x.device
+        k_axes = min(self.embed_dim, random.randint(3, 8))
+        proj_matrix = self._sample_empirical_directions(x, k_axes)
+        projections = x @ proj_matrix
+
+        y = torch.zeros(x.size(0), 1, device=device)
+        for i in range(k_axes):
+            weight = random.uniform(0.8, 2.5) * (1 if random.random() > 0.5 else -1)
+            y += weight * (torch.tanh(projections[:, i : i + 1]) if random.random() > 0.5 else projections[:, i : i + 1])
+
+        if k_axes >= 2:
+            synergy = random.uniform(-1.5, 1.5)
+            y += synergy * (projections[:, 0:1] * projections[:, 1:2])
         return y
 
     def _scaffold_gam_prior(self, x: torch.Tensor) -> torch.Tensor:
@@ -99,10 +122,12 @@ class EmpiricalBioactivityPrior:
         n_samples = x.size(0)
 
         p = random.random()
-        if p < 0.40:
-            y = self._free_wilson_prior(x)
-        elif p < 0.75:
+        if p < 0.35:
+            y = self._cosine_gp_prior(x)
+        elif p < 0.65:
             y = self._hill_kinetics_prior(x)
+        elif p < 0.85:
+            y = self._free_wilson_prior(x)
         else:
             y = self._scaffold_gam_prior(x)
 
@@ -110,7 +135,7 @@ class EmpiricalBioactivityPrior:
         dir_bg = self._sample_empirical_directions(x, 1)
         y = y + 0.25 * (x @ dir_bg)
 
-        # Activity cliffs on true high-similarity pairs
+        # Structural activity cliffs on high-similarity analogs
         if random.random() < 0.65 and n_samples > 4:
             x_norm = F.normalize(x, p=2, dim=-1)
             sim_matrix = x_norm @ x_norm.T
@@ -144,16 +169,16 @@ class EmpiricalBioactivityPrior:
 
 
 # ==============================================================================
-# 2. Cluster-Aware & Scaffold-Hopping Chemical Episodic Dataset
+# 2. Distance-Stratified Chemical Episodic Dataset
 # ==============================================================================
 
 class ChemicalEpisodicDataset(Dataset):
     """
-    Episodic Dataset providing full chemical distance coverage:
-    - 30% Tight Congeneric Series (sim > 0.80): Local SAR interpolation.
-    - 35% Scaffold-Hopping Series (0.35 < sim < 0.78): Matches Bemis-Murcko splits.
-    - 20% Multi-Family Expansions: 2-3 distinct clusters (scaffold ranking).
-    - 15% Global Diverse Decks: Broad uniform sampling.
+    Episodic Dataset generating realistic chemical context topologies:
+    - 30% Tight Congeneric Series (sim > 0.80): Local SAR and cliff learning.
+    - 35% Scaffold-Hopping Series (0.35 < sim < 0.78): Bemis-Murcko benchmark coverage.
+    - 20% Multi-Family Expansions: 2-3 distinct scaffolds (scaffold ranking).
+    - 15% Global Diverse Decks: Broad library screening coverage.
     """
     def __init__(
         self,
@@ -177,7 +202,7 @@ class ChemicalEpisodicDataset(Dataset):
 
     def _sample_indices(self, total_needed: int) -> torch.Tensor:
         p = random.random()
-        pool_size = min(self.n_samples, 2048)
+        pool_size = min(self.n_samples, max(2048, total_needed * 2))
         pool_idx = torch.randperm(self.n_samples)[:pool_size]
         pool = self.embeddings[pool_idx]
         seed = pool[0:1]
@@ -188,7 +213,7 @@ class ChemicalEpisodicDataset(Dataset):
             topk = torch.topk(sims, k=min(total_needed, len(pool)), largest=True).indices
             selected = pool_idx[topk]
 
-        # Mode B: 35% Scaffold-Hopping (Intermediate similarity matching test splits)
+        # Mode B: 35% Scaffold-Hopping Series
         elif p < 0.65:
             mid_mask = (sims >= 0.35) & (sims <= 0.78)
             mid_indices = pool_idx[mid_mask]
@@ -198,7 +223,7 @@ class ChemicalEpisodicDataset(Dataset):
                 topk = torch.topk(sims, k=min(total_needed, len(pool)), largest=True).indices
                 selected = pool_idx[topk]
 
-        # Mode C: 20% Multi-Family (2 distinct scaffolds)
+        # Mode C: 20% Multi-Family Expansions
         elif p < 0.85:
             half = total_needed // 2
             seed_b = pool[1:2]
@@ -238,62 +263,118 @@ class ChemicalEpisodicDataset(Dataset):
         }
 
 
-def pad_icl_batch_collate(batch):
+def pad_icl_perceiver_collate(batch):
+    """
+    Pads context sets to max_ctx in batch while building an explicit key_padding_mask.
+    Queries maintain fixed dimension num_queries without padding.
+    """
     batch_size = len(batch)
     max_ctx = max(item["n_ctx"] for item in batch)
     query_len = batch[0]["n_query"]
     embed_dim = batch[0]["x_ctx"].size(-1)
 
-    x_all = torch.zeros(batch_size, max_ctx + query_len, embed_dim)
-    y_all = torch.zeros(batch_size, max_ctx + query_len, 1)
-    y_query_gt = torch.zeros(batch_size, query_len, 1)
-    sample_mask = torch.zeros(batch_size, max_ctx + query_len, dtype=torch.bool)
+    x_ctx_padded = torch.zeros(batch_size, max_ctx, embed_dim)
+    y_ctx_padded = torch.zeros(batch_size, max_ctx, 1)
+    ctx_key_padding_mask = torch.ones(batch_size, max_ctx, dtype=torch.bool)  # True = Ignore
+
+    x_query = torch.zeros(batch_size, query_len, embed_dim)
+    y_query = torch.zeros(batch_size, query_len, 1)
     context_lens = []
 
     for i, item in enumerate(batch):
         nc = item["n_ctx"]
         context_lens.append(nc)
 
-        x_all[i, :nc] = item["x_ctx"]
-        y_all[i, :nc] = item["y_ctx"]
-        sample_mask[i, :nc] = True
+        x_ctx_padded[i, :nc] = item["x_ctx"]
+        y_ctx_padded[i, :nc] = item["y_ctx"]
+        ctx_key_padding_mask[i, :nc] = False  # False = Active token
 
-        x_all[i, nc : nc + query_len] = item["x_query"]
-        sample_mask[i, nc : nc + query_len] = True
-        y_query_gt[i] = item["y_query"]
+        x_query[i] = item["x_query"]
+        y_query[i] = item["y_query"]
 
     return {
-        "x": x_all,
-        "y": y_all,
-        "y_query_gt": y_query_gt,
-        "sample_mask": sample_mask,
+        "x_ctx": x_ctx_padded,
+        "y_ctx": y_ctx_padded,
+        "ctx_key_padding_mask": ctx_key_padding_mask,
+        "x_query": x_query,
+        "y_query": y_query,
         "context_lens": context_lens,
-        "query_len": query_len,
     }
 
 
 # ==============================================================================
-# 3. Inductive Transformer Backbone with Decoupled Joint Projections
+# 3. Feature-Attention & Latent Perceiver Architecture
 # ==============================================================================
 
-class InductiveCheMeleonTransformer(nn.Module):
+class InContextFeatureAttention(nn.Module):
+    """
+    Computes assay-conditioned feature modulation:
+    Evaluates covariance between feature projections and context targets,
+    dynamically scaling latent channels that correlate with bioactivity in this assay.
+    """
+    def __init__(self, d_model: int):
+        super().__init__()
+        self.gate_mlp = nn.Sequential(
+            nn.Linear(d_model, d_model),
+            nn.GELU(),
+            nn.Linear(d_model, d_model),
+            nn.Sigmoid(),
+        )
+
+    def forward(
+        self,
+        h_ctx: torch.Tensor,
+        y_ctx: torch.Tensor,
+        ctx_mask: torch.Tensor,
+    ) -> torch.Tensor:
+        """
+        Args:
+            h_ctx: (B, N_ctx, d_model)
+            y_ctx: (B, N_ctx, 1)
+            ctx_mask: (B, N_ctx) bool mask (True = padding)
+        Returns:
+            channel_scales: (B, 1, d_model) modulation multipliers in [0, 2]
+        """
+        valid_mask = (~ctx_mask).float().unsqueeze(-1)  # (B, N_ctx, 1)
+        denom = torch.clamp(valid_mask.sum(dim=1, keepdim=True), min=1.0)
+
+        # Centered covariances between feature projections and continuous targets
+        mean_h = (h_ctx * valid_mask).sum(dim=1, keepdim=True) / denom
+        mean_y = (y_ctx * valid_mask).sum(dim=1, keepdim=True) / denom
+
+        cov = ((h_ctx - mean_h) * (y_ctx - mean_y) * valid_mask).sum(dim=1) / denom.squeeze(-1)
+        gate = self.gate_mlp(cov).unsqueeze(1)  # (B, 1, d_model)
+        return 2.0 * gate
+
+
+class LatentContextPerceiverTransformer(nn.Module):
+    """
+    Linear-Complexity In-Context Perceiver Transformer:
+    1. In-line projection from native embedding dimension (e.g. 2048 -> d_model)
+    2. Dynamic in-context feature gating
+    3. Context Compressor: M learned latents cross-attend into N context molecules: O(M * N)
+    4. Latent Engine: TransformerEncoder processing compressed assay memory: O(M^2)
+    5. Query Decoder: Candidate molecules cross-attend into assay memory: O(Q * M)
+    """
     def __init__(
         self,
-        embed_dim: int = 32,
-        d_model: int = 384,
-        nhead: int = 12,
-        num_layers: int = 10,
-        dim_feedforward: int = 1536,
+        embed_dim: int = 2048,
+        d_model: int = 256,
+        m_latents: int = 128,
+        nhead: int = 8,
+        num_latent_layers: int = 8,
+        dim_feedforward: int = 1024,
         dropout: float = 0.1,
         num_bins: int = 64,
     ):
         super().__init__()
         self.embed_dim = embed_dim
         self.d_model = d_model
+        self.m_latents = m_latents
         self.num_bins = num_bins
 
-        # Input feature projection
-        self.x_proj = nn.Sequential(
+        # In-line feature projection replacing offline autoencoders
+        self.in_proj = nn.Sequential(
             nn.Linear(embed_dim, d_model),
             nn.LayerNorm(d_model),
             nn.GELU(),
@@ -301,24 +382,36 @@ class InductiveCheMeleonTransformer(nn.Module):
             nn.LayerNorm(d_model),
         )
 
-        # Continuous target projection
+        self.feature_attention = InContextFeatureAttention(d_model=d_model)
+
+        # Clean additive target projection
         self.y_proj = nn.Sequential(
             nn.Linear(1, d_model),
             nn.GELU(),
             nn.Linear(d_model, d_model),
         )
 
-        # Learned target query token
-        self.query_target_token = nn.Parameter(torch.randn(1, 1, d_model) * 0.02)
+        # Learned latent assay summary tokens
+        self.latent_tokens = nn.Parameter(torch.randn(1, m_latents, d_model) * 0.02)
 
-        # Joint projection cleanly combining molecular features and label tokens
-        self.joint_proj = nn.Sequential(
-            nn.Linear(2 * d_model, d_model),
+        # Stage 1: Context Compressor (Cross-Attention)
+        self.norm_latents = nn.LayerNorm(d_model)
+        self.norm_ctx = nn.LayerNorm(d_model)
+        self.ctx_cross_attn = nn.MultiheadAttention(
+            embed_dim=d_model,
+            num_heads=nhead,
+            dropout=dropout,
+            batch_first=True,
+        )
+        self.compressor_ffn = nn.Sequential(
             nn.LayerNorm(d_model),
+            nn.Linear(d_model, dim_feedforward),
             nn.GELU(),
-            nn.Linear(d_model, d_model),
+            nn.Dropout(dropout),
+            nn.Linear(dim_feedforward, d_model),
         )
 
+        # Stage 2: Latent Transformer Engine
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
             nhead=nhead,
@@ -328,8 +421,26 @@ class InductiveCheMeleonTransformer(nn.Module):
             batch_first=True,
             norm_first=True,
         )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        self.latent_transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_latent_layers)
 
+        # Stage 3: Query Decoder (Cross-Attention)
+        self.norm_query = nn.LayerNorm(d_model)
+        self.norm_assay_memory = nn.LayerNorm(d_model)
+        self.query_cross_attn = nn.MultiheadAttention(
+            embed_dim=d_model,
+            num_heads=nhead,
+            dropout=dropout,
+            batch_first=True,
+        )
+        self.query_ffn = nn.Sequential(
+            nn.LayerNorm(d_model),
+            nn.Linear(d_model, dim_feedforward),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(dim_feedforward, d_model),
+        )
+
+        # Readout prediction head over Riemann continuous outcome bins
         self.head = nn.Sequential(
             nn.Linear(d_model, d_model),
             nn.GELU(),
@@ -337,82 +448,72 @@ class InductiveCheMeleonTransformer(nn.Module):
             nn.Linear(d_model, num_bins),
         )
 
-    def _build_inductive_mask(
-        self,
-        batch_size: int,
-        total_len: int,
-        context_lens: list[int],
-        query_len: int,
-        device: torch.device,
-    ) -> torch.Tensor:
-        mask = torch.zeros(batch_size, total_len, total_len, device=device)
-        for b, nc in enumerate(context_lens):
-            # Context cannot attend to Queries or Padding
-            mask[b, :nc, nc:] = float("-inf")
-            # Queries cannot attend to other Queries
-            mask[b, nc : nc + query_len, nc : nc + query_len] = float("-inf")
-            # Queries attend to themselves on the diagonal
-            for q in range(query_len):
-                mask[b, nc + q, nc + q] = 0.0
-            # Queries cannot attend to padding beyond active tokens
-            if nc + query_len < total_len:
-                mask[b, nc : nc + query_len, nc + query_len :] = float("-inf")
-
-        return mask
-
     def forward(
         self,
-        x: torch.Tensor,
-        y: torch.Tensor,
-        context_lens: list[int],
-        query_len: int,
-        sample_mask: Optional[torch.Tensor] = None,
+        x_ctx: torch.Tensor,
+        y_ctx: torch.Tensor,
+        ctx_key_padding_mask: torch.Tensor,
+        x_query: torch.Tensor,
     ) -> torch.Tensor:
-        B, N, _ = x.shape
-        h_x = self.x_proj(x)
+        B = x_ctx.size(0)
 
-        h_tokens = torch.zeros_like(h_x)
-        for b, nc in enumerate(context_lens):
-            # Context tokens: Joint projection of [h_x, h_y]
-            h_y_ctx = self.y_proj(y[b : b + 1, :nc])
-            ctx_joint = torch.cat([h_x[b : b + 1, :nc], h_y_ctx], dim=-1)
-            h_tokens[b, :nc] = self.joint_proj(ctx_joint).squeeze(0)
+        # 1. In-line molecular projection
+        h_ctx_raw = self.in_proj(x_ctx)      # (B, N_ctx, d_model)
+        h_query_raw = self.in_proj(x_query)  # (B, N_query, d_model)
 
-            # Query tokens: Joint projection of [h_x, query_target_token]
-            h_y_q = self.query_target_token.expand(1, query_len, -1)
-            q_joint = torch.cat([h_x[b : b + 1, nc : nc + query_len], h_y_q], dim=-1)
-            h_tokens[b, nc : nc + query_len] = self.joint_proj(q_joint).squeeze(0)
+        # 2. Dynamic in-context feature gating
+        channel_scales = self.feature_attention(h_ctx_raw, y_ctx, ctx_key_padding_mask)
+        h_ctx_feat = h_ctx_raw * channel_scales
+        h_query_feat = h_query_raw * channel_scales
 
-        attn_mask = self._build_inductive_mask(B, N, context_lens, query_len, x.device)
-        num_heads = self.transformer.layers[0].self_attn.num_heads
-        attn_mask = attn_mask.repeat_interleave(num_heads, dim=0)
+        # 3. Additive token formation for context
+        h_ctx_tokens = h_ctx_feat + self.y_proj(y_ctx)
 
-        out = self.transformer(
-            src=h_tokens,
-            mask=attn_mask,
-            src_key_padding_mask=~sample_mask if sample_mask is not None else None,
+        # 4. Context Compressor (Cross-Attention: Latents -> Context)
+        latents_q = self.norm_latents(self.latent_tokens.expand(B, -1, -1))
+        ctx_kv = self.norm_ctx(h_ctx_tokens)
+
+        z_compressed, _ = self.ctx_cross_attn(
+            query=latents_q,
+            key=ctx_kv,
+            value=ctx_kv,
+            key_padding_mask=ctx_key_padding_mask,
         )
+        z = latents_q + z_compressed
+        z = z + self.compressor_ffn(z)
 
-        query_logits = []
-        for b, nc in enumerate(context_lens):
-            q_out = out[b, nc : nc + query_len]
-            query_logits.append(self.head(q_out))
+        # 5. Latent Transformer Engine
+        z_assay = self.latent_transformer(z)  # (B, M, d_model)
 
-        return torch.stack(query_logits, dim=0)  # (B, query_len, num_bins)
+        # 6. Query Readout (Cross-Attention: Query -> Compressed Assay Memory)
+        q_norm = self.norm_query(h_query_feat)
+        mem_kv = self.norm_assay_memory(z_assay)
+
+        q_readout, _ = self.query_cross_attn(
+            query=q_norm,
+            key=mem_kv,
+            value=mem_kv,
+        )
+        h_out = q_norm + q_readout
+        h_out = h_out + self.query_ffn(h_out)
+
+        # 7. Distribution logits
+        return self.head(h_out)  # (B, N_query, num_bins)
 
 
 # ==============================================================================
-# 4. Lightning Module with Two-Hot Soft Target Interpolation
+# 4. Lightning Module with Two-Hot Continuous Riemann Loss
 # ==============================================================================
 
 class TabularCheMeleonLightningModule(pl.LightningModule):
     def __init__(
         self,
-        embed_dim: int = 32,
-        d_model: int = 384,
-        nhead: int = 12,
-        num_layers: int = 10,
-        dim_feedforward: int = 1536,
+        embed_dim: int = 2048,
+        d_model: int = 256,
+        m_latents: int = 128,
+        nhead: int = 8,
+        num_latent_layers: int = 8,
+        dim_feedforward: int = 1024,
         dropout: float = 0.1,
         learning_rate: float = 3e-4,
         weight_decay: float = 1e-4,
@@ -426,18 +527,19 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
 
-        # Riemann support grid
+        # Setup Riemann support grid
         bin_edges = torch.linspace(support_min, support_max, num_bins + 1)
         bin_centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
         self.register_buffer("bin_edges", bin_edges)
         self.register_buffer("bin_centers", bin_centers)
         self.bin_width = (support_max - support_min) / num_bins
 
-        self.model = InductiveCheMeleonTransformer(
+        self.model = LatentContextPerceiverTransformer(
             embed_dim=embed_dim,
             d_model=d_model,
+            m_latents=m_latents,
             nhead=nhead,
-            num_layers=num_layers,
+            num_latent_layers=num_latent_layers,
             dim_feedforward=dim_feedforward,
             dropout=dropout,
             num_bins=num_bins,
@@ -445,11 +547,10 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
 
     def forward(self, batch):
         return self.model(
-            x=batch["x"],
-            y=batch["y"],
-            context_lens=batch["context_lens"],
-            query_len=batch["query_len"],
-            sample_mask=batch["sample_mask"],
+            x_ctx=batch["x_ctx"],
+            y_ctx=batch["y_ctx"],
+            ctx_key_padding_mask=batch["ctx_key_padding_mask"],
+            x_query=batch["x_query"],
         )
 
     def _distribution_to_moments(self, logits: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -459,7 +560,6 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
         return mean, var
 
     def _two_hot_encoding(self, targets: torch.Tensor) -> torch.Tensor:
-        """Smoothly interpolates target density between adjacent Riemann bins."""
         c0 = self.bin_centers[0]
         c_last = self.bin_centers[-1]
         clamped = torch.clamp(targets, min=c0.item(), max=c_last.item())
@@ -479,7 +579,7 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         logits = self(batch)
-        targets = batch["y_query_gt"]
+        targets = batch["y_query"]
 
         soft_targets = self._two_hot_encoding(targets)
         loss = F.cross_entropy(logits.view(-1, self.num_bins), soft_targets.view(-1, self.num_bins))
@@ -488,14 +588,14 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
             pred_mean, _ = self._distribution_to_moments(logits)
             mae = F.l1_loss(pred_mean, targets)
 
-        batch_size = batch["x"].size(0)
+        batch_size = batch["x_ctx"].size(0)
         self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=batch_size, sync_dist=True)
         self.log("train/mae", mae, on_step=True, on_epoch=True, prog_bar=False, batch_size=batch_size, sync_dist=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         logits = self(batch)
-        targets = batch["y_query_gt"]
+        targets = batch["y_query"]
 
         soft_targets = self._two_hot_encoding(targets)
         loss = F.cross_entropy(logits.view(-1, self.num_bins), soft_targets.view(-1, self.num_bins))
@@ -503,8 +603,7 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
         pred_mean, _ = self._distribution_to_moments(logits)
         mae = F.l1_loss(pred_mean, targets)
 
-        batch_size = batch["x"].size(0)
-        # Log both keys to ensure checkpointing and metric trackers never desync
+        batch_size = batch["x_ctx"].size(0)
         self.log("val_loss", loss, on_epoch=True, prog_bar=True, batch_size=batch_size, sync_dist=True)
         self.log("val/loss", loss, on_epoch=True, prog_bar=True, batch_size=batch_size, sync_dist=True)
         self.log("val/mae_overall", mae, on_epoch=True, prog_bar=True, batch_size=batch_size, sync_dist=True)
@@ -512,8 +611,8 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
         per_episode_mae = (pred_mean - targets).abs().mean(dim=(1, 2))
         ctx_lens = torch.tensor(batch["context_lens"], device=targets.device)
 
-        few_shot_mask = ctx_lens < 32
-        rich_context_mask = ctx_lens >= 64
+        few_shot_mask = ctx_lens < 64
+        rich_context_mask = ctx_lens >= 256
 
         if few_shot_mask.any():
             self.log(
@@ -546,7 +645,7 @@ class TabularCheMeleonLightningModule(pl.LightningModule):
             weight_decay=self.weight_decay,
             betas=(0.9, 0.98),
         )
-        total_epochs = self.trainer.max_epochs if self.trainer.max_epochs else 40
+        total_epochs = self.trainer.max_epochs if self.trainer.max_epochs else 50
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer,
             T_max=total_epochs,
@@ -618,7 +717,7 @@ class TabularCheMeleonDataModule(pl.LightningDataModule):
             self.train_ds,
             batch_size=self.batch_size,
             shuffle=True,
-            collate_fn=pad_icl_batch_collate,
+            collate_fn=pad_icl_perceiver_collate,
             num_workers=self.num_workers,
             pin_memory=True,
         )
@@ -628,7 +727,7 @@ class TabularCheMeleonDataModule(pl.LightningDataModule):
             self.val_ds,
             batch_size=self.batch_size,
             shuffle=False,
-            collate_fn=pad_icl_batch_collate,
+            collate_fn=pad_icl_perceiver_collate,
             num_workers=self.num_workers,
             pin_memory=True,
         )
@@ -639,21 +738,23 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--embeddings-path", type=str, required=True)
-    parser.add_argument("--batch-size", type=int, default=16)
-    parser.add_argument("--episodes-per-epoch", type=int, default=16_000)
-    parser.add_argument("--val-episodes", type=int, default=1_280)
-    parser.add_argument("--max-epochs", type=int, default=40)
-    parser.add_argument("--patience", type=int, default=10)
-    parser.add_argument("--d-model", type=int, default=384)
-    parser.add_argument("--nhead", type=int, default=12)
-    parser.add_argument("--num-layers", type=int, default=10)
-    parser.add_argument("--dim-feedforward", type=int, default=1536)
+    parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--episodes-per-epoch", type=int, default=32_000)  # 1,000 steps per epoch
+    parser.add_argument("--val-episodes", type=int, default=1_600)          # 50 validation batches
+    parser.add_argument("--max-epochs", type=int, default=50)
+    parser.add_argument("--patience", type=int, default=12)
+    parser.add_argument("--d-model", type=int, default=512)
+    parser.add_argument("--m-latents", type=int, default=256)
+    parser.add_argument("--nhead", type=int, default=8)                    # head_dim = 64
+    parser.add_argument("--num-latent-layers", type=int, default=10)
+    parser.add_argument("--dim-feedforward", type=int, default=2048)
     parser.add_argument("--num-bins", type=int, default=64)
-    parser.add_argument("--learning-rate", type=float, default=3e-4)
+    parser.add_argument("--learning-rate", type=float, default=2.5e-4)      # Slightly lower for d_model=512
     parser.add_argument("--weight-decay", type=float, default=1e-4)
-    parser.add_argument("--min-context", type=int, default=MIN_CONTEXT)
-    parser.add_argument("--max-context", type=int, default=MAX_CONTEXT)
-    parser.add_argument("--num-queries", type=int, default=NUM_QUERIES)
+    parser.add_argument("--min-context", type=int, default=32)
+    parser.add_argument("--max-context", type=int, default=2048)
+    parser.add_argument("--num-queries", type=int, default=64)
+    parser.add_argument("--num-workers", type=int, default=8)
     parser.add_argument("--precision", type=str, default="16-mixed")
     parser.add_argument("--log-dir", type=str, default="tabular_chemeleon_logs")
     args = parser.parse_args()
@@ -672,8 +773,9 @@ if __name__ == "__main__":
     model = TabularCheMeleonLightningModule(
         embed_dim=datamodule.embed_dim,
         d_model=args.d_model,
+        m_latents=args.m_latents,
         nhead=args.nhead,
-        num_layers=args.num_layers,
+        num_latent_layers=args.num_latent_layers,
         dim_feedforward=args.dim_feedforward,
         num_bins=args.num_bins,
         learning_rate=args.learning_rate,
@@ -682,7 +784,7 @@ if __name__ == "__main__":
 
     logger = TensorBoardLogger(
         save_dir=args.log_dir,
-        name="tabular_chemeleon",
+        name="tabular_chemeleon_perceiver",
         default_hp_metric=False,
     )
 
@@ -711,6 +813,6 @@ if __name__ == "__main__":
 
     trainer.fit(model, datamodule=datamodule)
 
-    model_path = Path(args.log_dir) / "tabularchemeleonv3.pt"
+    model_path = Path(args.log_dir) / "tabularchemeleon_perceiver.pt"
     trainer.save_checkpoint(model_path, weights_only=True)
-    print(f"Production model successfully trained and saved to: {model_path}")
+    print(f"Perceiver model successfully trained and saved to: {model_path}")
