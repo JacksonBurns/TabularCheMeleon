@@ -29,7 +29,7 @@ if __name__ == "__main__":
     reg_ckpt = sys.argv[1]
     leaderboard_path = sys.argv[2]
 
-    get_chemeleon_embeddings = CheMeleonEmbedder(device="cuda", type="autoencoded")
+    get_chemeleon_embeddings = CheMeleonEmbedder(device="cuda", type="full")
     reg = TabularCheMeleonRegressor(checkpoint_path=reg_ckpt, device="cuda")
 
     leaderboard_df = pd.read_csv(leaderboard_path)

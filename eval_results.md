@@ -1,19 +1,19 @@
 # Eval Results
 
-timestamp: 2026-10-06 18:36:37.511151
-checkpoint: tabularchemeleonv3.pt
+timestamp: 2026-10-07 19:37:56.866561
+checkpoint: tabularchemeleonv4.pt
 
 ## `polaris/pkis2-ret-wt-reg-v2`
 
 ### Model Performance
-|    | Test set   | Target label   | Metric              |      Score |
-|---:|:-----------|:---------------|:--------------------|-----------:|
-|  0 | test       | RET            | spearmanr           |   0.456117 |
-|  1 | test       | RET            | r2                  |   0.170586 |
-|  2 | test       | RET            | mean_absolute_error |  24.9269   |
-|  3 | test       | RET            | explained_var       |   0.184838 |
-|  4 | test       | RET            | pearsonr            |   0.540864 |
-|  5 | test       | RET            | mean_squared_error  | 984.851    |
+|    | Test set   | Target label   | Metric              |       Score |
+|---:|:-----------|:---------------|:--------------------|------------:|
+|  0 | test       | RET            | pearsonr            |    0.577115 |
+|  1 | test       | RET            | mean_squared_error  | 1068.09     |
+|  2 | test       | RET            | explained_var       |    0.202148 |
+|  3 | test       | RET            | spearmanr           |    0.510715 |
+|  4 | test       | RET            | mean_absolute_error |   24.0548   |
+|  5 | test       | RET            | r2                  |    0.100481 |
 
 ### Leaderboard Comparison
 | Name                                 |   mean_squared_error |
@@ -22,56 +22,56 @@ checkpoint: tabularchemeleonv3.pt
 | 3B_e50_MPNN_LargeMix-and-Phenomics   |              609.399 |
 | CheMeleon                            |              684.319 |
 | CheMeleon                            |              724.347 |
-| TabularCheMeleon                     |              984.851 |
+| TabularCheMeleon                     |             1068.09  |
 
 ## `polaris/pkis2-kit-wt-reg-v2`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric              |       Score |
 |---:|:-----------|:---------------|:--------------------|------------:|
-|  0 | test       | KIT            | spearmanr           |    0.372747 |
-|  1 | test       | KIT            | r2                  |    0.156965 |
-|  2 | test       | KIT            | mean_absolute_error |   27.1037   |
-|  3 | test       | KIT            | explained_var       |    0.157848 |
-|  4 | test       | KIT            | pearsonr            |    0.405649 |
-|  5 | test       | KIT            | mean_squared_error  | 1017.28     |
+|  0 | test       | KIT            | pearsonr            |    0.418586 |
+|  1 | test       | KIT            | mean_squared_error  | 1046.33     |
+|  2 | test       | KIT            | explained_var       |    0.133549 |
+|  3 | test       | KIT            | spearmanr           |    0.370088 |
+|  4 | test       | KIT            | mean_absolute_error |   26.6165   |
+|  5 | test       | KIT            | r2                  |    0.132887 |
 
 ### Leaderboard Comparison
 | Name             |   mean_squared_error |
 |:-----------------|---------------------:|
 | CheMeleon        |              849.611 |
-| TabularCheMeleon |             1017.28  |
+| TabularCheMeleon |             1046.33  |
 
 ## `polaris/pkis2-egfr-wt-reg-v2`
 
 ### Model Performance
-|    | Test set   | Target label   | Metric              |       Score |
-|---:|:-----------|:---------------|:--------------------|------------:|
-|  0 | test       | EGFR           | spearmanr           |   0.159321  |
-|  1 | test       | EGFR           | r2                  |   0.0999442 |
-|  2 | test       | EGFR           | mean_absolute_error |  21.636     |
-|  3 | test       | EGFR           | explained_var       |   0.105006  |
-|  4 | test       | EGFR           | pearsonr            |   0.325873  |
-|  5 | test       | EGFR           | mean_squared_error  | 725.237     |
+|    | Test set   | Target label   | Metric              |      Score |
+|---:|:-----------|:---------------|:--------------------|-----------:|
+|  0 | test       | EGFR           | pearsonr            |   0.355242 |
+|  1 | test       | EGFR           | mean_squared_error  | 705.672    |
+|  2 | test       | EGFR           | explained_var       |   0.124545 |
+|  3 | test       | EGFR           | spearmanr           |   0.185053 |
+|  4 | test       | EGFR           | mean_absolute_error |  21.2677   |
+|  5 | test       | EGFR           | r2                  |   0.124225 |
 
 ### Leaderboard Comparison
 | Name                                   |   mean_squared_error |
 |:---------------------------------------|---------------------:|
 | aether-pharmaos-pkis2-egfr-wt-ensemble |              430.821 |
 | CheMeleon                              |              459.929 |
-| TabularCheMeleon                       |              725.237 |
+| TabularCheMeleon                       |              705.672 |
 
 ## `polaris/adme-fang-solu-1`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric              |    Score |
 |---:|:-----------|:---------------|:--------------------|---------:|
-|  0 | test       | LOG_SOLUBILITY | spearmanr           | 0.436123 |
-|  1 | test       | LOG_SOLUBILITY | r2                  | 0.235016 |
-|  2 | test       | LOG_SOLUBILITY | mean_absolute_error | 0.435392 |
-|  3 | test       | LOG_SOLUBILITY | explained_var       | 0.25477  |
-|  4 | test       | LOG_SOLUBILITY | pearsonr            | 0.542335 |
-|  5 | test       | LOG_SOLUBILITY | mean_squared_error  | 0.414758 |
+|  0 | test       | LOG_SOLUBILITY | pearsonr            | 0.488533 |
+|  1 | test       | LOG_SOLUBILITY | mean_squared_error  | 0.43646  |
+|  2 | test       | LOG_SOLUBILITY | explained_var       | 0.216819 |
+|  3 | test       | LOG_SOLUBILITY | spearmanr           | 0.443314 |
+|  4 | test       | LOG_SOLUBILITY | mean_absolute_error | 0.435324 |
+|  5 | test       | LOG_SOLUBILITY | r2                  | 0.194989 |
 
 ### Leaderboard Comparison
 | Name                        |   pearsonr |
@@ -86,73 +86,73 @@ checkpoint: tabularchemeleonv3.pt
 | team9_submission_2          |   0.651    |
 | ExactTanimotoGP             |   0.635    |
 | ML4DD-team25                |   0.632    |
-| TabularCheMeleon            |   0.542335 |
+| TabularCheMeleon            |   0.488533 |
 
 ## `polaris/adme-fang-rppb-1`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric              |    Score |
 |---:|:-----------|:---------------|:--------------------|---------:|
-|  0 | test       | LOG_RPPB       | spearmanr           | 0.831304 |
-|  1 | test       | LOG_RPPB       | r2                  | 0.508305 |
-|  2 | test       | LOG_RPPB       | mean_absolute_error | 0.49436  |
-|  3 | test       | LOG_RPPB       | explained_var       | 0.508315 |
-|  4 | test       | LOG_RPPB       | pearsonr            | 0.730109 |
-|  5 | test       | LOG_RPPB       | mean_squared_error  | 0.436862 |
+|  0 | test       | LOG_RPPB       | pearsonr            | 0.63103  |
+|  1 | test       | LOG_RPPB       | mean_squared_error  | 0.545893 |
+|  2 | test       | LOG_RPPB       | explained_var       | 0.388305 |
+|  3 | test       | LOG_RPPB       | spearmanr           | 0.746957 |
+|  4 | test       | LOG_RPPB       | mean_absolute_error | 0.547008 |
+|  5 | test       | LOG_RPPB       | r2                  | 0.385589 |
 
 ### Leaderboard Comparison
 | Name                                          |   pearsonr |
 |:----------------------------------------------|-----------:|
-| 1B_MPNN_LargeMix-and-Phenomics                |   0.908    |
-| 1B_MPNN_MolGPS-ens_LargeMix                   |   0.886    |
-| nepare                                        |   0.863    |
-| TabPFNv2-rdkit                                |   0.816    |
-| nepare_chemprop                               |   0.78     |
-| chemma-2b-sft                                 |   0.747    |
-| TabularCheMeleon                              |   0.730109 |
-| adme-fang-RPPB-1_desc2D_RandomForestRegressor |   0.722    |
-| adme-fang-RPPB-1-GIRAFFE-wae                  |   0.68     |
-| CheMeleon                                     |   0.662    |
-| chemlactica-1b-sft                            |   0.614    |
+| 1B_MPNN_LargeMix-and-Phenomics                |    0.908   |
+| 1B_MPNN_MolGPS-ens_LargeMix                   |    0.886   |
+| nepare                                        |    0.863   |
+| TabPFNv2-rdkit                                |    0.816   |
+| nepare_chemprop                               |    0.78    |
+| chemma-2b-sft                                 |    0.747   |
+| adme-fang-RPPB-1_desc2D_RandomForestRegressor |    0.722   |
+| adme-fang-RPPB-1-GIRAFFE-wae                  |    0.68    |
+| CheMeleon                                     |    0.662   |
+| TabularCheMeleon                              |    0.63103 |
+| chemlactica-1b-sft                            |    0.614   |
 
 ## `polaris/adme-fang-hppb-1`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric              |    Score |
 |---:|:-----------|:---------------|:--------------------|---------:|
-|  0 | test       | LOG_HPPB       | spearmanr           | 0.787226 |
-|  1 | test       | LOG_HPPB       | r2                  | 0.583733 |
-|  2 | test       | LOG_HPPB       | mean_absolute_error | 0.3746   |
-|  3 | test       | LOG_HPPB       | explained_var       | 0.63359  |
-|  4 | test       | LOG_HPPB       | pearsonr            | 0.796005 |
-|  5 | test       | LOG_HPPB       | mean_squared_error  | 0.252108 |
+|  0 | test       | LOG_HPPB       | pearsonr            | 0.72821  |
+|  1 | test       | LOG_HPPB       | mean_squared_error  | 0.32889  |
+|  2 | test       | LOG_HPPB       | explained_var       | 0.525664 |
+|  3 | test       | LOG_HPPB       | spearmanr           | 0.767668 |
+|  4 | test       | LOG_HPPB       | mean_absolute_error | 0.457421 |
+|  5 | test       | LOG_HPPB       | r2                  | 0.456954 |
 
 ### Leaderboard Comparison
 | Name                                            |   pearsonr |
 |:------------------------------------------------|-----------:|
-| 1B_MPNN_LargeMix-and-Phenomics                  |   0.888    |
-| 1B_MPNN_MolGPS-ens_LargeMix                     |   0.884    |
-| TabPFNv2-rdkit                                  |   0.827    |
-| adme-fang-HPPB-1-GIRAFFE-wae                    |   0.815    |
-| agentomics-ml-adme-fang-hppb-1                  |   0.815    |
-| nepare                                          |   0.809    |
-| TabularCheMeleon                                |   0.796005 |
-| CheMeleon                                       |   0.793    |
-| chemlactica-125m-sft                            |   0.774    |
-| adme-fang-HPPB-1_atompair_RandomForestRegressor |   0.69     |
-| chemma-2b-sft                                   |   0.636    |
+| 1B_MPNN_LargeMix-and-Phenomics                  |    0.888   |
+| 1B_MPNN_MolGPS-ens_LargeMix                     |    0.884   |
+| TabPFNv2-rdkit                                  |    0.827   |
+| adme-fang-HPPB-1-GIRAFFE-wae                    |    0.815   |
+| agentomics-ml-adme-fang-hppb-1                  |    0.815   |
+| nepare                                          |    0.809   |
+| CheMeleon                                       |    0.793   |
+| chemlactica-125m-sft                            |    0.774   |
+| TabularCheMeleon                                |    0.72821 |
+| adme-fang-HPPB-1_atompair_RandomForestRegressor |    0.69    |
+| chemma-2b-sft                                   |    0.636   |
 
 ## `polaris/adme-fang-perm-1`
 
 ### Model Performance
 |    | Test set   | Target label     | Metric              |    Score |
 |---:|:-----------|:-----------------|:--------------------|---------:|
-|  0 | test       | LOG_MDR1-MDCK_ER | spearmanr           | 0.587483 |
-|  1 | test       | LOG_MDR1-MDCK_ER | r2                  | 0.323351 |
-|  2 | test       | LOG_MDR1-MDCK_ER | mean_absolute_error | 0.454934 |
-|  3 | test       | LOG_MDR1-MDCK_ER | explained_var       | 0.334835 |
-|  4 | test       | LOG_MDR1-MDCK_ER | pearsonr            | 0.596681 |
-|  5 | test       | LOG_MDR1-MDCK_ER | mean_squared_error  | 0.335207 |
+|  0 | test       | LOG_MDR1-MDCK_ER | pearsonr            | 0.665101 |
+|  1 | test       | LOG_MDR1-MDCK_ER | mean_squared_error  | 0.283499 |
+|  2 | test       | LOG_MDR1-MDCK_ER | explained_var       | 0.436572 |
+|  3 | test       | LOG_MDR1-MDCK_ER | spearmanr           | 0.64468  |
+|  4 | test       | LOG_MDR1-MDCK_ER | mean_absolute_error | 0.402079 |
+|  5 | test       | LOG_MDR1-MDCK_ER | r2                  | 0.427728 |
 
 ### Leaderboard Comparison
 | Name                                          |   pearsonr |
@@ -167,19 +167,19 @@ checkpoint: tabularchemeleonv3.pt
 | optimized-random-forest-rdkit-descriptors     |   0.727    |
 | adme-fang-PERM-1_desc2D_RandomForestRegressor |   0.716    |
 | chemlactica-125m-sft                          |   0.714    |
-| TabularCheMeleon                              |   0.596681 |
+| TabularCheMeleon                              |   0.665101 |
 
 ## `polaris/adme-fang-rclint-1`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric              |    Score |
 |---:|:-----------|:---------------|:--------------------|---------:|
-|  0 | test       | LOG_RLM_CLint  | spearmanr           | 0.523662 |
-|  1 | test       | LOG_RLM_CLint  | r2                  | 0.255537 |
-|  2 | test       | LOG_RLM_CLint  | mean_absolute_error | 0.533613 |
-|  3 | test       | LOG_RLM_CLint  | explained_var       | 0.256545 |
-|  4 | test       | LOG_RLM_CLint  | pearsonr            | 0.511328 |
-|  5 | test       | LOG_RLM_CLint  | mean_squared_error  | 0.420281 |
+|  0 | test       | LOG_RLM_CLint  | pearsonr            | 0.566449 |
+|  1 | test       | LOG_RLM_CLint  | mean_squared_error  | 0.389168 |
+|  2 | test       | LOG_RLM_CLint  | explained_var       | 0.31405  |
+|  3 | test       | LOG_RLM_CLint  | spearmanr           | 0.568436 |
+|  4 | test       | LOG_RLM_CLint  | mean_absolute_error | 0.510206 |
+|  5 | test       | LOG_RLM_CLint  | r2                  | 0.310651 |
 
 ### Leaderboard Comparison
 | Name                                            |   pearsonr |
@@ -193,20 +193,20 @@ checkpoint: tabularchemeleonv3.pt
 | chemma-2b-sft                                   |   0.66     |
 | adme-fang-RCLint-1_desc2D_RandomForestRegressor |   0.64     |
 | adme-fang-RCLint-1_desc2D_RandomForestRegressor |   0.631    |
+| TabularCheMeleon                                |   0.566449 |
 | adme-fang-RCLint-1_desc2D_FCModel               |   0.544    |
-| TabularCheMeleon                                |   0.511328 |
 
 ## `polaris/adme-fang-hclint-1`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric              |    Score |
 |---:|:-----------|:---------------|:--------------------|---------:|
-|  0 | test       | LOG_HLM_CLint  | spearmanr           | 0.494846 |
-|  1 | test       | LOG_HLM_CLint  | r2                  | 0.218967 |
-|  2 | test       | LOG_HLM_CLint  | mean_absolute_error | 0.452001 |
-|  3 | test       | LOG_HLM_CLint  | explained_var       | 0.226172 |
-|  4 | test       | LOG_HLM_CLint  | pearsonr            | 0.486514 |
-|  5 | test       | LOG_HLM_CLint  | mean_squared_error  | 0.303361 |
+|  0 | test       | LOG_HLM_CLint  | pearsonr            | 0.515822 |
+|  1 | test       | LOG_HLM_CLint  | mean_squared_error  | 0.294817 |
+|  2 | test       | LOG_HLM_CLint  | explained_var       | 0.264783 |
+|  3 | test       | LOG_HLM_CLint  | spearmanr           | 0.529911 |
+|  4 | test       | LOG_HLM_CLint  | mean_absolute_error | 0.437233 |
+|  5 | test       | LOG_HLM_CLint  | r2                  | 0.240964 |
 
 ### Leaderboard Comparison
 | Name                                            |   pearsonr |
@@ -221,14 +221,14 @@ checkpoint: tabularchemeleonv3.pt
 | chemma-2b-sft                                   |   0.674    |
 | TabPFNv2-rdkit                                  |   0.662    |
 | adme-fang-HCLint-1_desc2D_RandomForestRegressor |   0.639    |
-| TabularCheMeleon                                |   0.486514 |
+| TabularCheMeleon                                |   0.515822 |
 
 ## `tdcommons/lipophilicity-astrazeneca`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric              |    Score |
 |---:|:-----------|:---------------|:--------------------|---------:|
-|  0 | test       | Y              | mean_absolute_error | 0.827672 |
+|  0 | test       | Y              | mean_absolute_error | 0.869601 |
 
 ### Leaderboard Comparison
 | Name                                      |   mean_absolute_error |
@@ -243,14 +243,14 @@ checkpoint: tabularchemeleonv3.pt
 | TabPFNv2-rdkit                            |              0.502    |
 | TabPFNv2-maplight_gnn                     |              0.502    |
 | TabPFNv2-rdkit-3D                         |              0.524    |
-| TabularCheMeleon                          |              0.827672 |
+| TabularCheMeleon                          |              0.869601 |
 
 ## `tdcommons/ppbr-az`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric              |   Score |
 |---:|:-----------|:---------------|:--------------------|--------:|
-|  0 | test       | Y              | mean_absolute_error | 9.76204 |
+|  0 | test       | Y              | mean_absolute_error | 8.72338 |
 
 ### Leaderboard Comparison
 | Name                               |   mean_absolute_error |
@@ -260,14 +260,14 @@ checkpoint: tabularchemeleonv3.pt
 | TabPFNv2-rdkit-3D                  |               7.033   |
 | TabPFNv2-rdkit                     |               7.117   |
 | CheMeleon                          |               7.532   |
-| TabularCheMeleon                   |               9.76204 |
+| TabularCheMeleon                   |               8.72338 |
 
 ## `tdcommons/clearance-hepatocyte-az`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric    |    Score |
 |---:|:-----------|:---------------|:----------|---------:|
-|  0 | test       | Y              | spearmanr | 0.269654 |
+|  0 | test       | Y              | spearmanr | 0.343935 |
 
 ### Leaderboard Comparison
 | Name                                |   spearmanr |
@@ -278,14 +278,14 @@ checkpoint: tabularchemeleonv3.pt
 | TabPFNv2-rdkit                      |    0.41     |
 | TabPFNv2-rdkit-3D                   |    0.402    |
 | CheMeleon                           |    0.387    |
-| TabularCheMeleon                    |    0.269654 |
+| TabularCheMeleon                    |    0.343935 |
 
 ## `tdcommons/half-life-obach`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric    |    Score |
 |---:|:-----------|:---------------|:----------|---------:|
-|  0 | test       | Y              | spearmanr | 0.131399 |
+|  0 | test       | Y              | spearmanr | 0.256264 |
 
 ### Leaderboard Comparison
 | Name                               |   spearmanr |
@@ -296,14 +296,14 @@ checkpoint: tabularchemeleonv3.pt
 | TabPFNv2-rdkit-3D                  |    0.489    |
 | MolEncoder                         |    0.417    |
 | CheMeleon                          |    0.36     |
-| TabularCheMeleon                   |    0.131399 |
+| TabularCheMeleon                   |    0.256264 |
 
 ## `tdcommons/clearance-microsome-az`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric    |    Score |
 |---:|:-----------|:---------------|:----------|---------:|
-|  0 | test       | Y              | spearmanr | 0.429834 |
+|  0 | test       | Y              | spearmanr | 0.439041 |
 
 ### Leaderboard Comparison
 | Name                               |   spearmanr |
@@ -313,14 +313,14 @@ checkpoint: tabularchemeleonv3.pt
 | TabPFNv2-rdkit-3D                  |    0.649    |
 | TabPFNv2-rdkit                     |    0.64     |
 | CheMeleon                          |    0.59     |
-| TabularCheMeleon                   |    0.429834 |
+| TabularCheMeleon                   |    0.439041 |
 
 ## `tdcommons/vdss-lombardo`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric    |    Score |
 |---:|:-----------|:---------------|:----------|---------:|
-|  0 | test       | Y              | spearmanr | 0.317454 |
+|  0 | test       | Y              | spearmanr | 0.388559 |
 
 ### Leaderboard Comparison
 | Name                               |   spearmanr |
@@ -331,14 +331,14 @@ checkpoint: tabularchemeleonv3.pt
 | 1B_MPNN_LargeMix-and-Phenomics     |    0.637    |
 | 3B_e50_MPNN_LargeMix-and-Phenomics |    0.6      |
 | CheMeleon                          |    0.59     |
-| TabularCheMeleon                   |    0.317454 |
+| TabularCheMeleon                   |    0.388559 |
 
 ## `tdcommons/caco2-wang`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric              |    Score |
 |---:|:-----------|:---------------|:--------------------|---------:|
-|  0 | test       | Y              | mean_absolute_error | 0.392176 |
+|  0 | test       | Y              | mean_absolute_error | 0.458928 |
 
 ### Leaderboard Comparison
 | Name                                      |   mean_absolute_error |
@@ -353,14 +353,14 @@ checkpoint: tabularchemeleonv3.pt
 | mini-PlanE-E-BasePlanE-seed42             |              0.314    |
 | 3B_e50_MPNN_LargeMix-and-Phenomics        |              0.316    |
 | 1B_MPNN_LargeMix-and-Phenomics            |              0.319    |
-| TabularCheMeleon                          |              0.392176 |
+| TabularCheMeleon                          |              0.458928 |
 
 ## `tdcommons/ld50-zhu`
 
 ### Model Performance
 |    | Test set   | Target label   | Metric              |   Score |
 |---:|:-----------|:---------------|:--------------------|--------:|
-|  0 | test       | Y              | mean_absolute_error |  0.7336 |
+|  0 | test       | Y              | mean_absolute_error |  0.7185 |
 
 ### Leaderboard Comparison
 | Name                               |   mean_absolute_error |
@@ -370,62 +370,62 @@ checkpoint: tabularchemeleonv3.pt
 | TabPFNv2-rdkit-3D                  |                0.605  |
 | 1B_MPNN_LargeMix-and-Phenomics     |                0.614  |
 | 3B_e50_MPNN_LargeMix-and-Phenomics |                0.625  |
-| TabularCheMeleon                   |                0.7336 |
+| TabularCheMeleon                   |                0.7185 |
 
 # Summary
 
-Average Rank of TabularCheMeleon across benchmarks with 4+ other entries (15): 8.27
+Average Rank of TabularCheMeleon across benchmarks with 4+ other entries (15): 8.53
 
 results_dict = {
     "polaris/pkis2-ret-wt-reg-v2": {
-        "mean_squared_error": 984.8508528138325
+        "mean_squared_error": 1068.093061246866
     },
     "polaris/pkis2-kit-wt-reg-v2": {
-        "mean_squared_error": 1017.2768585267203
+        "mean_squared_error": 1046.331195038693
     },
     "polaris/pkis2-egfr-wt-reg-v2": {
-        "mean_squared_error": 725.2366257213008
+        "mean_squared_error": 705.6715256476682
     },
     "polaris/adme-fang-solu-1": {
-        "pearsonr": 0.542335002013943
+        "pearsonr": 0.48853282029410916
     },
     "polaris/adme-fang-rppb-1": {
-        "pearsonr": 0.7301087810563714
+        "pearsonr": 0.6310295408390837
     },
     "polaris/adme-fang-hppb-1": {
-        "pearsonr": 0.7960050425912507
+        "pearsonr": 0.7282095392690612
     },
     "polaris/adme-fang-perm-1": {
-        "pearsonr": 0.596681022759891
+        "pearsonr": 0.6651005715017023
     },
     "polaris/adme-fang-rclint-1": {
-        "pearsonr": 0.5113284429372741
+        "pearsonr": 0.5664491355631013
     },
     "polaris/adme-fang-hclint-1": {
-        "pearsonr": 0.4865136284535299
+        "pearsonr": 0.515821941376274
     },
     "tdcommons/lipophilicity-astrazeneca": {
-        "mean_absolute_error": 0.8276723220064527
+        "mean_absolute_error": 0.8696014474630357
     },
     "tdcommons/ppbr-az": {
-        "mean_absolute_error": 9.762039288843253
+        "mean_absolute_error": 8.723382632233376
     },
     "tdcommons/clearance-hepatocyte-az": {
-        "spearmanr": 0.26965406434044464
+        "spearmanr": 0.3439353661474872
     },
     "tdcommons/half-life-obach": {
-        "spearmanr": 0.1313994847219221
+        "spearmanr": 0.25626382039470935
     },
     "tdcommons/clearance-microsome-az": {
-        "spearmanr": 0.42983390298042357
+        "spearmanr": 0.4390406730013735
     },
     "tdcommons/vdss-lombardo": {
-        "spearmanr": 0.3174543940721411
+        "spearmanr": 0.3885590354311097
     },
     "tdcommons/caco2-wang": {
-        "mean_absolute_error": 0.392175973895398
+        "mean_absolute_error": 0.4589275611773817
     },
     "tdcommons/ld50-zhu": {
-        "mean_absolute_error": 0.7336004081869318
+        "mean_absolute_error": 0.7184996248756275
     }
 }
