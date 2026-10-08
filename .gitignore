@@ -1,6 +1,11 @@
 *.pt
+*.ckpt
 autoencoder/tb_logs
 tabular_chemeleon_logs
+lightning_logs/
+icl_logs/
+icl_logs_v2/
+_inspect_cache.py
 
 # typical python gitignore
 # https://github.com/github/gitignore/blob/b06d69d5a0b82a187180dac3d46a4ebe1e40bce5/Python.gitignore

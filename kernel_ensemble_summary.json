@@ -1,0 +1,121 @@
+{
+  "polaris/pkis2-ret-wt-reg-v2": {
+    "score": 839.9005890356639,
+    "w_raw": 0.565,
+    "w_white": 0.435,
+    "metric": "mean_squared_error",
+    "n_train": 534
+  },
+  "polaris/pkis2-kit-wt-reg-v2": {
+    "score": 936.1002092729784,
+    "w_raw": 0.687,
+    "w_white": 0.313,
+    "metric": "mean_squared_error",
+    "n_train": 524
+  },
+  "polaris/pkis2-egfr-wt-reg-v2": {
+    "score": 512.2846336363064,
+    "w_raw": 0.612,
+    "w_white": 0.388,
+    "metric": "mean_squared_error",
+    "n_train": 496
+  },
+  "polaris/adme-fang-solu-1": {
+    "score": 0.6437442645052756,
+    "w_raw": 0.611,
+    "w_white": 0.389,
+    "metric": "pearsonr",
+    "n_train": 1578
+  },
+  "polaris/adme-fang-rppb-1": {
+    "score": 0.6870230450188076,
+    "w_raw": 0.817,
+    "w_white": 0.183,
+    "metric": "pearsonr",
+    "n_train": 111
+  },
+  "polaris/adme-fang-hppb-1": {
+    "score": 0.6531265057834983,
+    "w_raw": 0.747,
+    "w_white": 0.253,
+    "metric": "pearsonr",
+    "n_train": 126
+  },
+  "polaris/adme-fang-perm-1": {
+    "score": 0.767974857800798,
+    "w_raw": 0.58,
+    "w_white": 0.42,
+    "metric": "pearsonr",
+    "n_train": 1919
+  },
+  "polaris/adme-fang-rclint-1": {
+    "score": 0.7068899706700046,
+    "w_raw": 0.563,
+    "w_white": 0.437,
+    "metric": "pearsonr",
+    "n_train": 2218
+  },
+  "polaris/adme-fang-hclint-1": {
+    "score": 0.6787221765962265,
+    "w_raw": 0.55,
+    "w_white": 0.45,
+    "metric": "pearsonr",
+    "n_train": 2229
+  },
+  "tdcommons/lipophilicity-astrazeneca": {
+    "score": 0.5183215244311422,
+    "w_raw": 0.537,
+    "w_white": 0.463,
+    "metric": "mean_absolute_error",
+    "n_train": 3360
+  },
+  "tdcommons/ppbr-az": {
+    "score": 8.659921097828125,
+    "w_raw": 0.553,
+    "w_white": 0.447,
+    "metric": "mean_absolute_error",
+    "n_train": 2231
+  },
+  "tdcommons/clearance-hepatocyte-az": {
+    "score": 0.40318915830428376,
+    "w_raw": 0.626,
+    "w_white": 0.374,
+    "metric": "spearmanr",
+    "n_train": 970
+  },
+  "tdcommons/half-life-obach": {
+    "score": 0.13142207728514307,
+    "w_raw": 1.0,
+    "w_white": 0.0,
+    "metric": "spearmanr",
+    "n_train": 532
+  },
+  "tdcommons/clearance-microsome-az": {
+    "score": 0.5775790989262657,
+    "w_raw": 0.744,
+    "w_white": 0.256,
+    "metric": "spearmanr",
+    "n_train": 881
+  },
+  "tdcommons/vdss-lombardo": {
+    "score": 0.34465143257093045,
+    "w_raw": 0.748,
+    "w_white": 0.252,
+    "metric": "spearmanr",
+    "n_train": 904
+  },
+  "tdcommons/caco2-wang": {
+    "score": 0.31752817182225684,
+    "w_raw": 0.644,
+    "w_white": 0.356,
+    "metric": "mean_absolute_error",
+    "n_train": 728
+  },
+  "tdcommons/ld50-zhu": {
+    "score": 0.6315012744325336,
+    "w_raw": 0.528,
+    "w_white": 0.472,
+    "metric": "mean_absolute_error",
+    "n_train": 5907
+  }
+}

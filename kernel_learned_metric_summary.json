@@ -1,0 +1,83 @@
+{
+  "polaris/pkis2-ret-wt-reg-v2": {
+    "learned": 1257.9767195422944,
+    "svd_white": 1027.0484487014974,
+    "raw_ambient": 1257.9767084773698,
+    "metric": "mean_squared_error",
+    "n_train": 534,
+    "val_opt": -0.9076,
+    "V_moved_pct": 1776.5
+  },
+  "polaris/pkis2-kit-wt-reg-v2": {
+    "learned": 1042.8537939625028,
+    "svd_white": 1041.3814698671254,
+    "raw_ambient": 1209.4587161396432,
+    "metric": "mean_squared_error",
+    "n_train": 524,
+    "val_opt": -0.7629,
+    "V_moved_pct": 297.8
+  },
+  "polaris/pkis2-egfr-wt-reg-v2": {
+    "learned": 805.8599707159915,
+    "svd_white": 607.5213910817049,
+    "raw_ambient": 805.8632724802367,
+    "metric": "mean_squared_error",
+    "n_train": 496,
+    "val_opt": -0.6163,
+    "V_moved_pct": 1799.0
+  },
+  "polaris/adme-fang-solu-1": {
+    "learned": 0.16979878914298974,
+    "svd_white": 0.4755700603123506,
+    "raw_ambient": -0.0675448821090163,
+    "metric": "pearsonr",
+    "n_train": 1578,
+    "val_opt": 0.3236,
+    "V_moved_pct": 282.3
+  },
+  "polaris/adme-fang-rppb-1": {
+    "learned": 0.0342973653746457,
+    "svd_white": 0.7744967993376594,
+    "raw_ambient": NaN,
+    "metric": "pearsonr",
+    "n_train": 111,
+    "val_opt": 0.4566,
+    "V_moved_pct": 1812.3
+  },
+  "polaris/adme-fang-hppb-1": {
+    "learned": 0.15331646152967215,
+    "svd_white": 0.7399242462537102,
+    "raw_ambient": NaN,
+    "metric": "pearsonr",
+    "n_train": 126,
+    "val_opt": 0.3189,
+    "V_moved_pct": 1407.3
+  },
+  "polaris/adme-fang-perm-1": {
+    "learned": 0.21691495777928033,
+    "svd_white": 0.6506138703701652,
+    "raw_ambient": 0.05391727893543373,
+    "metric": "pearsonr",
+    "n_train": 1919,
+    "val_opt": 0.3575,
+    "V_moved_pct": 294.2
+  },
+  "polaris/adme-fang-rclint-1": {
+    "learned": 0.18270690697352554,
+    "svd_white": 0.5657028580473805,
+    "raw_ambient": 0.06200621220929709,
+    "metric": "pearsonr",
+    "n_train": 2218,
+    "val_opt": 0.3732,
+    "V_moved_pct": 307.2
+  },
+  "polaris/adme-fang-hclint-1": {
+    "learned": 0.22691306887609838,
+    "svd_white": 0.5509436242856802,
+    "raw_ambient": NaN,
+    "metric": "pearsonr",
+    "n_train": 2229,
+    "val_opt": 0.3353,
+    "V_moved_pct": 308.7
+  }
+}
