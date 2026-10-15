@@ -1,6 +1,6 @@
 *.pt
 autoencoder/tb_logs
-tabular_chemeleon_logs
+tabular_chemeleon_logs*
 
 # typical python gitignore
 # https://github.com/github/gitignore/blob/b06d69d5a0b82a187180dac3d46a4ebe1e40bce5/Python.gitignore

@@ -78,13 +78,16 @@ checkpoint: {reg_ckpt}
         if task_type != TargetType.REGRESSION:
             print(f"Skipping benchmark {benchmark_name} as it is not a regression task.")
             continue
-
-        predictions = reg.fit_predict(
-            X_context=get_chemeleon_embeddings(train_smiles_list),
-            y_context=torch.tensor(train_labels_list, dtype=torch.float32),
-            X_query=get_chemeleon_embeddings(test_df[smiles_col].to_list())
-        )
-        torch.cuda.empty_cache()
+        try:
+            predictions = reg.fit_predict(
+                X_context=get_chemeleon_embeddings(train_smiles_list),
+                y_context=torch.tensor(train_labels_list, dtype=torch.float32),
+                X_query=get_chemeleon_embeddings(test_df[smiles_col].to_list())
+            )
+            torch.cuda.empty_cache()
+        except Exception as e:
+            print(f"Error processing benchmark {benchmark_name}: {e}")
+            continue
 
         results = benchmark.evaluate(predictions.flatten()).results
         performance = results.query(
